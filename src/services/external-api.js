@@ -2,16 +2,22 @@
  * External API Service
  *
  * Handles generic API requests to external (non-Liferay) endpoints.
- * Supports authentication tokens and pagination.
+ * Supports authentication tokens, custom pagination parameters, and flexible response parsing.
  */
 
 import axios from 'axios';
 
 /**
+ * Gets value from nested object using dot notation
+ * Example: getNestedValue({data: {items: [1,2,3]}}, 'data.items') returns [1,2,3]
+ */
+const getNestedValue = (obj, path) => {
+  if (!path) return obj;
+  return path.split('.').reduce((current, key) => current?.[key], obj);
+};
+
+/**
  * Creates an axios instance for external API calls
- *
- * @param {string} token - Optional authentication token
- * @returns {Object} Axios instance
  */
 const createExternalApiInstance = (token = '') => {
   const config = {
@@ -22,9 +28,7 @@ const createExternalApiInstance = (token = '') => {
     },
   };
 
-  // Add authentication header if token provided
   if (token && token.trim()) {
-    // Check if token already includes 'Bearer'
     const authToken = token.trim().startsWith('Bearer ')
       ? token.trim()
       : `Bearer ${token.trim()}`;
@@ -35,45 +39,66 @@ const createExternalApiInstance = (token = '') => {
 };
 
 /**
- * Fetches data from external API endpoint
+ * Fetches data from external API endpoint with customizable parameters
  *
  * @param {string} endpoint - Full API URL
  * @param {string} token - Optional authentication token
  * @param {Object} pagination - Pagination parameters
+ * @param {Object} apiConfig - API configuration (param names, response paths)
  * @returns {Promise<Object>} Response with data and pagination
  */
-export const fetchData = async (endpoint, token = '', pagination = {}) => {
+export const fetchData = async (endpoint, token = '', pagination = {}, apiConfig = {}) => {
   try {
     const api = createExternalApiInstance(token);
     const { page = 1, pageSize = 20 } = pagination;
 
-    // Build query parameters
+    // Get custom parameter names or use defaults
+    const paramNames = apiConfig.apiParamNames || {
+      page: '_page',
+      pageSize: '_limit',
+      sort: 'sort',
+    };
+
+    // Build query parameters using custom names
     const params = {
-      _page: page,
-      _limit: pageSize,
+      [paramNames.page]: page,
+      [paramNames.pageSize]: pageSize,
     };
 
     const response = await api.get(endpoint, { params });
 
-    // Handle different response formats
-    let data = response.data;
-    let total = 0;
+    // Get response data path configuration
+    const responsePaths = apiConfig.responseDataPath || {
+      dataKey: '',
+      totalKey: 'x-total-count',
+      totalSource: 'header',
+    };
 
-    // If response is array (common in REST APIs)
-    if (Array.isArray(data)) {
-      total = parseInt(response.headers['x-total-count'] || data.length);
-    } else if (data.items && Array.isArray(data.items)) {
-      // If response has items property (Liferay-style)
-      data = data.items;
-      total = data.totalCount || data.length;
-    } else if (data.data && Array.isArray(data.data)) {
-      // If response has data property
-      total = data.total || data.data.length;
-      data = data.data;
+    // Extract data using configured path
+    let data = responsePaths.dataKey
+      ? getNestedValue(response.data, responsePaths.dataKey)
+      : response.data;
+
+    // Ensure data is an array
+    if (!Array.isArray(data)) {
+      data = [data];
+    }
+
+    // Extract total count based on configuration
+    let total = data.length; // Default fallback
+
+    if (responsePaths.totalSource === 'header') {
+      // Get from response headers
+      const headerValue = response.headers[responsePaths.totalKey.toLowerCase()];
+      total = headerValue ? parseInt(headerValue, 10) : data.length;
+    } else {
+      // Get from response body
+      const bodyValue = getNestedValue(response.data, responsePaths.totalKey);
+      total = bodyValue !== undefined ? parseInt(bodyValue, 10) : data.length;
     }
 
     return {
-      data: Array.isArray(data) ? data : [data],
+      data,
       pagination: {
         current: page,
         pageSize,
@@ -93,32 +118,33 @@ export const fetchData = async (endpoint, token = '', pagination = {}) => {
 
 /**
  * Tests connection to API endpoint
- *
- * @param {string} endpoint - Full API URL
- * @param {string} token - Optional authentication token
- * @returns {Promise<Object>} Test result with status and sample data
  */
-export const testConnection = async (endpoint, token = '') => {
+export const testConnection = async (endpoint, token = '', apiConfig = {}) => {
   try {
     const api = createExternalApiInstance(token);
 
-    // Fetch just first item or small sample
+    // Use configured param names for test
+    const paramNames = apiConfig?.apiParamNames || {
+      page: '_page',
+      pageSize: '_limit',
+    };
+
     const response = await api.get(endpoint, {
       params: {
-        _limit: 1,
-        _page: 1,
+        [paramNames.pageSize]: 1,
+        [paramNames.page]: 1,
       },
     });
 
-    let data = response.data;
+    // Try to extract data using configuration
+    const responsePaths = apiConfig?.responseDataPath || { dataKey: '' };
+    let data = responsePaths.dataKey
+      ? getNestedValue(response.data, responsePaths.dataKey)
+      : response.data;
 
-    // Normalize response format
+    // Normalize to single item for preview
     if (Array.isArray(data)) {
       data = data[0] || data;
-    } else if (data.items && Array.isArray(data.items)) {
-      data = data.items[0] || data.items;
-    } else if (data.data) {
-      data = Array.isArray(data.data) ? data.data[0] : data.data;
     }
 
     return {
@@ -126,6 +152,7 @@ export const testConnection = async (endpoint, token = '') => {
       status: response.status,
       sampleData: data,
       message: 'Connection successful',
+      fullResponse: response.data, // Include full response for debugging
     };
   } catch (error) {
     return {
@@ -142,14 +169,15 @@ export const testConnection = async (endpoint, token = '') => {
 
 /**
  * Parses API response structure and identifies available fields
- *
- * @param {Object|Array} data - API response data
- * @returns {Object} Parsed structure with field suggestions
+ * Enhanced to work with configured data paths
  */
-export const parseResponseStructure = (data) => {
+export const parseResponseStructure = (data, dataPath = '') => {
   try {
+    // Extract data from nested path if provided
+    let targetData = dataPath ? getNestedValue(data, dataPath) : data;
+
     // Get first item if array
-    const sample = Array.isArray(data) ? data[0] : data;
+    const sample = Array.isArray(targetData) ? targetData[0] : targetData;
 
     if (!sample || typeof sample !== 'object') {
       return {
@@ -172,24 +200,27 @@ export const parseResponseStructure = (data) => {
         name: key,
         type,
         sampleValue: value,
-        // Suggest as column if it's a primitive type
         suggestAsColumn: ['string', 'number', 'boolean'].includes(type),
       };
     });
+
+    // Generate suggested columns with IDs
+    const suggestedColumns = fields
+      .filter((f) => f.suggestAsColumn)
+      .map((f, index) => ({
+        id: `col_${Date.now()}_${index}`,
+        key: f.name,
+        title: f.name.charAt(0).toUpperCase() + f.name.slice(1).replace(/_/g, ' '),
+        dataIndex: f.name,
+        sortable: true,
+        clickable: false,
+      }));
 
     return {
       fields,
       sampleData: sample,
       isValid: true,
-      suggestedColumns: fields
-        .filter((f) => f.suggestAsColumn)
-        .map((f) => ({
-          key: f.name,
-          title: f.name.charAt(0).toUpperCase() + f.name.slice(1),
-          dataIndex: f.name,
-          sortable: true,
-          clickable: false,
-        })),
+      suggestedColumns,
     };
   } catch (error) {
     console.error('Error parsing response structure:', error);
@@ -202,8 +233,43 @@ export const parseResponseStructure = (data) => {
   }
 };
 
+/**
+ * Auto-generates columns from data if no columns configured
+ * Uses first row to determine column structure
+ */
+export const autoGenerateColumns = (data) => {
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  const firstRow = data[0];
+  const columns = [];
+
+  Object.keys(firstRow).forEach((key, index) => {
+    const value = firstRow[key];
+    const isObject = typeof value === 'object' && value !== null;
+    const isArray = Array.isArray(value);
+
+    // Only create columns for primitive values
+    if (!isObject && !isArray) {
+      columns.push({
+        id: `col_auto_${Date.now()}_${index}`,
+        key,
+        title: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+        dataIndex: key,
+        sortable: false,
+        clickable: false,
+      });
+    }
+  });
+
+  return columns;
+};
+
 export default {
   fetchData,
   testConnection,
   parseResponseStructure,
+  autoGenerateColumns,
+  getNestedValue,
 };
