@@ -1,15 +1,16 @@
 /**
  * Table View Page
  * Página para visualizar uma tabela específica
+ * ATUALIZADO: Usando novo sistema de API com buildApiUrl e estado reativo
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Space, Typography, Skeleton, Modal, Alert } from 'antd';
 import { SettingOutlined, ReloadOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTables } from '../contexts/TablesContext';
 import DxpTable from '../components/dxp-table';
-import ApiService from '../services/api';
+import { fetchData } from '../services/external-api';
 import { buildTableColumns } from '../utils/column-renderer.jsx';
 import { executeCustomEvent } from '../utils/event-handler';
 import { getFriendlyError } from '../utils/friendly-messages';
@@ -23,11 +24,11 @@ const TableViewPage = () => {
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 20,
-    total: 0,
-  });
+
+  // Estado reativo de paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageSize, setCurrentPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
 
   const table = getTableById(tableId);
   const config = table?.config;
@@ -39,35 +40,65 @@ const TableViewPage = () => {
     }
   }, [tableId, setActiveTable]);
 
-  // Load data when config changes
-  useEffect(() => {
-    if (config && config.api.baseURL) {
-      loadData(config);
+  /**
+   * Carrega dados da API usando novo sistema
+   */
+  const loadData = useCallback(async (page = currentPage, pageSize = currentPageSize) => {
+    if (!config || !config.api?.baseURL) {
+      console.warn('⚠️ Config ou baseURL não definidos');
+      return;
     }
-  }, [config]);
-
-  const loadData = async (cfg, page = 1, pageSize = 20) => {
-    if (!cfg || !cfg.api.baseURL) return;
 
     setLoading(true);
+
+    console.log('');
+    console.log('═══════════════════════════════════════════════');
+    console.log('📊 [TableViewPage] Carregando dados da tabela');
+    console.log('═══════════════════════════════════════════════');
+
     try {
-      const apiService = new ApiService({
-        ...cfg.api,
-        mapping: cfg.mapping,
-        pagination: cfg.pagination,
-      });
-      const response = await apiService.get('', { page, pageSize });
+      // Monta valores dinâmicos de paginação
+      const dynamicValues = {};
 
-      const dataArray = response.data || [];
-      setData(dataArray);
+      // Se houver query params configurados, usa os nomes deles
+      const pageParam = config.api.queryParams?.find(p => p.reference === 'PAGE_CHANGE');
+      const pageSizeParam = config.api.queryParams?.find(p => p.reference === 'PAGE_SIZE_CHANGE');
 
-      setPagination({
-        current: response.page || page,
-        pageSize: pageSize,
-        total: response.total || dataArray.length,
-      });
+      if (pageParam && pageParam.enabled) {
+        dynamicValues[pageParam.name] = page;
+      }
+
+      if (pageSizeParam && pageSizeParam.enabled) {
+        dynamicValues[pageSizeParam.name] = pageSize;
+      }
+
+      console.log('  📄 Página:', page);
+      console.log('  📦 Tamanho:', pageSize);
+
+      // Chama novo serviço de API
+      const response = await fetchData(
+        config.api,
+        dynamicValues,
+        config.mapping || {}
+      );
+
+      console.log('  ✅ Dados carregados com sucesso!');
+      console.log('  📊 Total de registros:', response.pagination?.total || response.data.length);
+      console.log('═══════════════════════════════════════════════');
+      console.log('');
+
+      setData(response.data || []);
+      setTotal(response.pagination?.total || response.data.length);
+      setCurrentPage(page);
+      setCurrentPageSize(pageSize);
+
     } catch (error) {
-      console.error('Failed to load data:', error);
+      console.error('');
+      console.error('═══════════════════════════════════════════════');
+      console.error('❌ [TableViewPage] Erro ao carregar dados');
+      console.error('═══════════════════════════════════════════════');
+      console.error(error);
+      console.error('');
 
       const friendlyError = getFriendlyError(error);
       Modal.error({
@@ -75,39 +106,71 @@ const TableViewPage = () => {
         content: (
           <div style={{ whiteSpace: 'pre-line' }}>
             {friendlyError.message}
+            <br /><br />
+            <strong>Dica:</strong> Abra o Console do navegador (F12) para ver detalhes da requisição.
           </div>
         ),
         okText: 'Entendi',
-        width: 500,
+        width: 600,
       });
+
+      setData([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [config, currentPage, currentPageSize]);
 
+  // Carrega dados quando config muda
+  useEffect(() => {
+    if (config && config.api?.baseURL) {
+      loadData(1, currentPageSize); // Reset to page 1 when config changes
+    }
+  }, [config?.api?.baseURL, config?.api?.path]); // Only reload when URL changes
+
+  /**
+   * Handler para mudança de página
+   */
+  const handlePageChange = useCallback((page) => {
+    console.log('');
+    console.log('📄 [TableViewPage] Mudança de página:', currentPage, '→', page);
+    loadData(page, currentPageSize);
+  }, [loadData, currentPage, currentPageSize]);
+
+  /**
+   * Handler para mudança de tamanho de página
+   */
+  const handlePageSizeChange = useCallback((pageSize) => {
+    console.log('');
+    console.log('📦 [TableViewPage] Mudança de tamanho:', currentPageSize, '→', pageSize);
+    loadData(1, pageSize); // Reset to page 1 when page size changes
+  }, [loadData, currentPageSize]);
+
+  /**
+   * Handler para recarregar dados
+   */
   const handleReload = () => {
-    if (config) {
-      loadData(config, pagination.current, pagination.pageSize);
-    }
+    console.log('');
+    console.log('🔄 [TableViewPage] Recarregando dados...');
+    loadData(currentPage, currentPageSize);
   };
 
-  const handlePaginationChange = (page, pageSize) => {
-    setPagination({ current: page, pageSize, total: pagination.total });
-    if (config) {
-      loadData(config, page, pageSize);
-    }
-  };
-
-  const handleRowClick = (record, index, event) => {
+  /**
+   * Handler para click em linha
+   */
+  const handleRowClick = (record) => {
     if (config?.events?.onRowClick) {
       try {
-        executeCustomEvent(config.events.onRowClick, { record, index, event });
+        executeCustomEvent(config.events.onRowClick, { record });
       } catch (error) {
         console.error('Error executing row click event:', error);
       }
     }
   };
 
+  /**
+   * Gera colunas da tabela
+   */
   const getColumns = () => {
     if (config && config.columns && config.columns.length > 0) {
       const eventHandlers = config.events || {};
@@ -154,7 +217,7 @@ const TableViewPage = () => {
   }
 
   // Table not configured
-  if (!config || !config.api.baseURL) {
+  if (!config || !config.api?.baseURL) {
     return (
       <div className="page-container">
         <Card>
@@ -182,6 +245,9 @@ const TableViewPage = () => {
       </div>
     );
   }
+
+  // Verifica se paginação está habilitada
+  const isPaginationEnabled = config.pagination?.enabled !== false;
 
   return (
     <div className="page-container">
@@ -233,13 +299,26 @@ const TableViewPage = () => {
             data={data}
             loading={loading}
             pagination={{
-              ...pagination,
-              onChange: handlePaginationChange,
-              showSizeChanger: true,
-              showTotal: (total) => `Total de ${total} itens`,
+              current: currentPage,
+              pageSize: currentPageSize,
+              total: total,
+              pageSizeOptions: config.pagination?.pageSizeOptions || [10, 20, 50, 100],
             }}
-            rowKey="id"
+            paginationEnabled={isPaginationEnabled}
+            onPaginationChange={(newPagination) => {
+              // DxpTable chama isso com {current, pageSize}
+              if (newPagination.pageSize !== currentPageSize) {
+                handlePageSizeChange(newPagination.pageSize);
+              } else if (newPagination.current !== currentPage) {
+                handlePageChange(newPagination.current);
+              }
+            }}
+            rowKey={(record) => record.id || record.key || Math.random()}
             onRowClick={handleRowClick}
+            onSort={(sorter) => {
+              console.log('🔀 Sort:', sorter);
+              // TODO: Implementar ordenação quando necessário
+            }}
           />
         )}
       </Card>

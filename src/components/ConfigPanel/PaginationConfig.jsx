@@ -1,43 +1,68 @@
 /**
  * Pagination Configuration
  * Configuração de parâmetros de paginação da API
+ * Agora com Tags/Chips para opções de tamanho de página
  */
 
-import React from 'react';
-import { Form, Input, InputNumber, Select, Switch, Space, Alert } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Form, InputNumber, Select, Switch, Space, Alert, Tag, Input, Button } from 'antd';
+import { InfoCircleOutlined, PlusOutlined, CloseOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
 const PaginationConfig = ({ value = {}, onChange }) => {
   const {
     enabled = true,
-    pageNumberParam = 'page',
-    pageSizeParam = 'limit',
     defaultPageSize = 20,
     pageSizeOptions = [10, 20, 50, 100],
     showSizeChanger = true,
-    startFrom = 1, // 0 or 1
+    startFrom = 1,
   } = value;
+
+  // Estado local para novo valor a adicionar
+  const [inputVisible, setInputVisible] = useState(false);
+  const [inputValue, setInputValue] = useState('');
 
   const updateField = (field, val) => {
     onChange({ ...value, [field]: val });
   };
 
-  const updatePageSizeOptions = (optionsString) => {
-    try {
-      const options = optionsString.split(',').map((s) => parseInt(s.trim())).filter(n => !isNaN(n));
-      updateField('pageSizeOptions', options);
-    } catch (error) {
-      console.error('Invalid page size options:', error);
+  /**
+   * Remove uma opção de tamanho
+   */
+  const handleRemoveOption = (optionToRemove) => {
+    const newOptions = pageSizeOptions.filter(opt => opt !== optionToRemove);
+    updateField('pageSizeOptions', newOptions);
+  };
+
+  /**
+   * Adiciona nova opção de tamanho
+   */
+  const handleAddOption = () => {
+    const newValue = parseInt(inputValue);
+
+    if (!isNaN(newValue) && newValue > 0 && !pageSizeOptions.includes(newValue)) {
+      const newOptions = [...pageSizeOptions, newValue].sort((a, b) => a - b);
+      updateField('pageSizeOptions', newOptions);
     }
+
+    setInputValue('');
+    setInputVisible(false);
+  };
+
+  /**
+   * Cancela adição de nova opção
+   */
+  const handleCancelAdd = () => {
+    setInputValue('');
+    setInputVisible(false);
   };
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Alert
         message="Configuração de Paginação"
-        description="Configure como os parâmetros de paginação serão enviados para a API."
+        description="Configure como a paginação funcionará na tabela. Quando desabilitada, o footer da tabela será ocultado automaticamente."
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
@@ -46,7 +71,7 @@ const PaginationConfig = ({ value = {}, onChange }) => {
       <Form layout="vertical">
         <Form.Item
           label="Habilitar Paginação"
-          help="Ative para enviar parâmetros de paginação nas requisições"
+          help="Ative para exibir controles de paginação no footer da tabela"
         >
           <Switch
             checked={enabled}
@@ -58,32 +83,6 @@ const PaginationConfig = ({ value = {}, onChange }) => {
 
         {enabled && (
           <>
-            <Space style={{ width: '100%' }} size="large">
-              <Form.Item
-                label="Parâmetro do Número da Página"
-                help="Nome do parâmetro enviado (ex: page, pageNumber, offset)"
-                style={{ flex: 1 }}
-              >
-                <Input
-                  placeholder="page"
-                  value={pageNumberParam}
-                  onChange={(e) => updateField('pageNumberParam', e.target.value)}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="Parâmetro do Tamanho da Página"
-                help="Nome do parâmetro enviado (ex: limit, pageSize, perPage)"
-                style={{ flex: 1 }}
-              >
-                <Input
-                  placeholder="limit"
-                  value={pageSizeParam}
-                  onChange={(e) => updateField('pageSizeParam', e.target.value)}
-                />
-              </Form.Item>
-            </Space>
-
             <Space style={{ width: '100%' }} size="large">
               <Form.Item
                 label="Página Inicial"
@@ -101,7 +100,7 @@ const PaginationConfig = ({ value = {}, onChange }) => {
 
               <Form.Item
                 label="Tamanho Padrão da Página"
-                help="Quantidade de itens por página"
+                help="Quantidade de itens exibidos por página"
                 style={{ flex: 1 }}
               >
                 <InputNumber
@@ -116,18 +115,72 @@ const PaginationConfig = ({ value = {}, onChange }) => {
 
             <Form.Item
               label="Opções de Tamanho de Página"
-              help="Lista de opções separadas por vírgula (ex: 10, 20, 50, 100)"
+              help="Clique no + para adicionar novas opções. Clique no X para remover."
             >
-              <Input
-                placeholder="10, 20, 50, 100"
-                value={pageSizeOptions.join(', ')}
-                onChange={(e) => updatePageSizeOptions(e.target.value)}
-              />
+              <div>
+                <Space size={[0, 8]} wrap>
+                  {pageSizeOptions.map((option) => (
+                    <Tag
+                      key={option}
+                      closable
+                      onClose={() => handleRemoveOption(option)}
+                      color="blue"
+                      style={{ fontSize: '14px', padding: '4px 8px' }}
+                    >
+                      {option} itens
+                    </Tag>
+                  ))}
+
+                  {inputVisible ? (
+                    <Space.Compact>
+                      <Input
+                        type="number"
+                        size="small"
+                        style={{ width: 80 }}
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onPressEnter={handleAddOption}
+                        onBlur={handleAddOption}
+                        placeholder="Ex: 30"
+                        autoFocus
+                      />
+                      <Button
+                        size="small"
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleAddOption}
+                      />
+                      <Button
+                        size="small"
+                        icon={<CloseOutlined />}
+                        onClick={handleCancelAdd}
+                      />
+                    </Space.Compact>
+                  ) : (
+                    <Tag
+                      onClick={() => setInputVisible(true)}
+                      style={{
+                        background: '#fff',
+                        borderStyle: 'dashed',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        padding: '4px 8px'
+                      }}
+                    >
+                      <PlusOutlined /> Adicionar
+                    </Tag>
+                  )}
+                </Space>
+
+                <div style={{ marginTop: 8, fontSize: '12px', color: '#8c8c8c' }}>
+                  💡 Dica: As opções são ordenadas automaticamente do menor para o maior
+                </div>
+              </div>
             </Form.Item>
 
             <Form.Item
               label="Mostrar Seletor de Tamanho"
-              help="Permite ao usuário escolher quantos itens por página"
+              help="Permite ao usuário escolher quantos itens exibir por página"
             >
               <Switch
                 checked={showSizeChanger}
@@ -140,29 +193,46 @@ const PaginationConfig = ({ value = {}, onChange }) => {
         )}
       </Form>
 
+      {enabled && (
+        <Alert
+          message="💡 Dica sobre Query Params"
+          description="Para que a paginação funcione corretamente com sua API, configure os Query Params na aba 'API' com as referências PAGE_CHANGE e PAGE_SIZE_CHANGE."
+          type="success"
+          showIcon
+        />
+      )}
+
+      {!enabled && (
+        <Alert
+          message="ℹ️ Paginação Desabilitada"
+          description="Com a paginação desabilitada, o footer da tabela não será exibido e todos os dados serão mostrados de uma vez."
+          type="warning"
+          showIcon
+        />
+      )}
+
       <Alert
         message="Exemplos de Configuração"
         description={
           <div>
-            <p><strong>API REST padrão:</strong></p>
+            <p><strong>Configuração padrão (recomendada):</strong></p>
             <ul>
-              <li>Parâmetro da página: <code>page</code></li>
-              <li>Parâmetro do tamanho: <code>limit</code></li>
               <li>Página inicial: 1</li>
-              <li>Exemplo: <code>?page=1&limit=20</code></li>
+              <li>Tamanho padrão: 20 itens</li>
+              <li>Opções: 10, 20, 50, 100</li>
             </ul>
 
-            <p><strong>API com offset:</strong></p>
+            <p><strong>Para APIs com offset (começando em 0):</strong></p>
             <ul>
-              <li>Parâmetro da página: <code>offset</code></li>
-              <li>Parâmetro do tamanho: <code>limit</code></li>
               <li>Página inicial: 0</li>
-              <li>Exemplo: <code>?offset=0&limit=20</code></li>
+              <li>Tamanho padrão: 20 itens</li>
+              <li>Configure query params com nomes como "offset" e "limit"</li>
             </ul>
           </div>
         }
-        type="success"
+        type="info"
         showIcon
+        style={{ marginTop: 16 }}
       />
     </Space>
   );

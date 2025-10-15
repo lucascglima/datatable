@@ -19,6 +19,7 @@ import { dxpTablePropTypes, dxpTableDefaultProps } from './dxp-table.types';
  * @param {Function} props.onRowClick - Callback when row is clicked
  * @param {Function} props.onPaginationChange - Callback when pagination changes
  * @param {string} props.rowKey - Unique key for each row
+ * @param {boolean} props.paginationEnabled - Controls footer visibility
  */
 const DxpTable = ({
   columns,
@@ -29,6 +30,7 @@ const DxpTable = ({
   onRowClick,
   onPaginationChange,
   rowKey,
+  paginationEnabled = true,
 }) => {
   /**
    * Process header configuration and get columns with sort handler
@@ -76,14 +78,17 @@ const DxpTable = ({
         onRow={handleRowClick}
       />
 
-      <DxpTableFooter
-        current={pagination.current}
-        pageSize={pagination.pageSize}
-        total={pagination.total}
-        pageSizeOptions={pagination.pageSizeOptions}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-      />
+      {/* Renderiza footer apenas se paginação estiver habilitada */}
+      {paginationEnabled && (
+        <DxpTableFooter
+          current={pagination.current}
+          pageSize={pagination.pageSize}
+          total={pagination.total}
+          pageSizeOptions={pagination.pageSizeOptions}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      )}
     </div>
   );
 };

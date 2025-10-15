@@ -1,16 +1,26 @@
 /**
  * API Configuration Tab
- * Simple key/value configuration (NO JSON editors)
+ * Nova estrutura: URL Base + Path + Path Params + Query Params
+ * Configuração intuitiva e visual com preview da URL final
  */
 
 import React from 'react';
-import { Form, Input, Button, Space, Card, Divider, Tooltip, Alert, Typography } from 'antd';
+import { Form, Input, Button, Space, Divider, Tooltip, Alert, Typography } from 'antd';
 import { PlusOutlined, DeleteOutlined, QuestionCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import ParamsTable from '../shared/ParamsTable';
+import UrlPreview from '../shared/UrlPreview';
 
 const { Text } = Typography;
 
 const ApiConfig = ({ value = {}, onChange }) => {
-  const { baseURL = '', token = '', headers = [], body = [] } = value;
+  const {
+    baseURL = '',
+    path = '',
+    pathParams = [],
+    queryParams = [],
+    token = '',
+    headers = [],
+  } = value;
 
   const updateConfig = (updates) => {
     onChange({ ...value, ...updates });
@@ -30,26 +40,12 @@ const ApiConfig = ({ value = {}, onChange }) => {
     updateConfig({ headers: headers.filter((_, i) => i !== index) });
   };
 
-  const addBodyParam = () => {
-    updateConfig({ body: [...body, { key: '', value: '' }] });
-  };
-
-  const updateBodyParam = (index, field, val) => {
-    const newBody = [...body];
-    newBody[index][field] = val;
-    updateConfig({ body: newBody });
-  };
-
-  const removeBodyParam = (index) => {
-    updateConfig({ body: body.filter((_, i) => i !== index) });
-  };
-
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       {/* Help Alert */}
       <Alert
-        message="🌐 O que é uma API?"
-        description="Uma API é como um 'endereço na internet' de onde virão os dados da sua tabela. É tipo pedir informações para um site e receber de volta uma lista organizada."
+        message="🌐 Configuração da API"
+        description="Configure o endereço da API e os parâmetros que serão enviados nas requisições. Use variáveis dinâmicas no path e configure parâmetros de consulta que se atualizam automaticamente."
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
@@ -60,12 +56,12 @@ const ApiConfig = ({ value = {}, onChange }) => {
       <Form.Item
         label={
           <Space>
-            <Text>Endereço da API</Text>
+            <Text strong>URL Base</Text>
             <Tooltip
               title={
                 <div>
                   <p><strong>O que é?</strong></p>
-                  <p>É o endereço principal da sua API, tipo um site mas para dados.</p>
+                  <p>É o endereço principal da sua API, sem o caminho específico.</p>
                   <p><strong>Exemplo:</strong></p>
                   <p>https://jsonplaceholder.typicode.com</p>
                   <p>https://api.seusite.com</p>
@@ -80,7 +76,7 @@ const ApiConfig = ({ value = {}, onChange }) => {
         required
         help={
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            💡 Ex: https://jsonplaceholder.typicode.com (copie e cole o endereço aqui)
+            💡 Ex: https://jsonplaceholder.typicode.com (apenas o domínio, sem o caminho)
           </Text>
         }
       >
@@ -93,11 +89,136 @@ const ApiConfig = ({ value = {}, onChange }) => {
         />
       </Form.Item>
 
-      {/* Token */}
+      {/* Path */}
       <Form.Item
         label={
           <Space>
-            <Text>Senha de Acesso (Token)</Text>
+            <Text strong>Caminho (Path)</Text>
+            <Tooltip
+              title={
+                <div>
+                  <p><strong>O que é?</strong></p>
+                  <p>É o caminho específico do recurso que você quer acessar na API.</p>
+                  <p><strong>Exemplos:</strong></p>
+                  <p>/users - Lista todos os usuários</p>
+                  <p>/posts - Lista todos os posts</p>
+                  <p>/users/{'{userId}'} - Usuário específico (com variável)</p>
+                  <p><strong>Variáveis:</strong></p>
+                  <p>Use {'{nomeVariavel}'} para criar variáveis no path.</p>
+                </div>
+              }
+            >
+              <QuestionCircleOutlined style={{ color: '#1890ff', cursor: 'help' }} />
+            </Tooltip>
+          </Space>
+        }
+        help={
+          <Text type="secondary" style={{ fontSize: '12px' }}>
+            💡 Ex: /users ou /users/{':userId'} (use {'{variavel}'} para valores dinâmicos)
+          </Text>
+        }
+      >
+        <Input
+          placeholder="/users"
+          value={path}
+          onChange={(e) => updateConfig({ path: e.target.value })}
+          size="large"
+          prefix="📁"
+        />
+      </Form.Item>
+
+      <Divider>
+        <Space>
+          Variáveis do Path (Path Params)
+          <Tooltip
+            title={
+              <div>
+                <p><strong>O que são?</strong></p>
+                <p>Valores que substituem as variáveis no path.</p>
+                <p><strong>Exemplo:</strong></p>
+                <p>Se o path é /users/{'{userId}'}</p>
+                <p>E você adicionar: userId = 123</p>
+                <p>A URL final será: /users/123</p>
+              </div>
+            }
+          >
+            <QuestionCircleOutlined style={{ color: '#1890ff', cursor: 'help' }} />
+          </Tooltip>
+        </Space>
+      </Divider>
+
+      <Alert
+        message="ℹ️ Quando usar?"
+        description="Use Path Params quando você tiver variáveis no path (ex: {userId}). Cada variável no path precisa ter um valor correspondente aqui."
+        type="info"
+        showIcon
+        closable
+        style={{ marginBottom: 16 }}
+      />
+
+      <ParamsTable
+        params={pathParams}
+        onChange={(newParams) => updateConfig({ pathParams: newParams })}
+        type="path"
+      />
+
+      <Divider>
+        <Space>
+          Parâmetros de Consulta (Query Params)
+          <Tooltip
+            title={
+              <div>
+                <p><strong>O que são?</strong></p>
+                <p>Parâmetros enviados na URL após o "?"</p>
+                <p><strong>Exemplo:</strong></p>
+                <p>?page=1&limit=20&sort=name</p>
+                <p><strong>Referências Automáticas:</strong></p>
+                <p>Configure para atualizar automaticamente quando o usuário:</p>
+                <ul>
+                  <li>Mudar de página</li>
+                  <li>Alterar itens por página</li>
+                  <li>Ordenar colunas</li>
+                </ul>
+              </div>
+            }
+          >
+            <QuestionCircleOutlined style={{ color: '#1890ff', cursor: 'help' }} />
+          </Tooltip>
+        </Space>
+      </Divider>
+
+      <Alert
+        message="✨ Parâmetros Inteligentes"
+        description="Configure parâmetros que se atualizam automaticamente com as ações do usuário (paginação, ordenação, etc). Você também pode criar parâmetros estáticos com valores fixos."
+        type="success"
+        showIcon
+        closable
+        style={{ marginBottom: 16 }}
+      />
+
+      <ParamsTable
+        params={queryParams}
+        onChange={(newParams) => updateConfig({ queryParams: newParams })}
+        type="query"
+      />
+
+      <Divider>Preview da URL</Divider>
+
+      <UrlPreview
+        baseURL={baseURL}
+        path={path}
+        pathParams={pathParams}
+        queryParams={queryParams}
+        showValidation={true}
+      />
+
+      {/* Token */}
+      <Divider>Autenticação</Divider>
+
+      <Form.Item
+        label={
+          <Space>
+            <Text>Token de Acesso</Text>
             <Tooltip
               title={
                 <div>
@@ -116,12 +237,12 @@ const ApiConfig = ({ value = {}, onChange }) => {
         }
         help={
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            ⚠️ Opcional - Deixe em branco se sua API não exigir senha
+            ⚠️ Opcional - Deixe em branco se sua API não exigir autenticação
           </Text>
         }
       >
         <Input.Password
-          placeholder="Cole aqui a senha fornecida pela API (se tiver)"
+          placeholder="Cole aqui o token fornecido pela API (se tiver)"
           value={token}
           onChange={(e) => updateConfig({ token: e.target.value })}
           size="large"
@@ -130,7 +251,7 @@ const ApiConfig = ({ value = {}, onChange }) => {
 
       <Divider>
         <Space>
-          Informações Extras (Headers)
+          Headers Personalizados (Avançado)
           <Tooltip
             title={
               <div>
@@ -160,117 +281,52 @@ const ApiConfig = ({ value = {}, onChange }) => {
 
       {/* Headers */}
       {headers.map((header, index) => (
-        <Card key={index} size="small" style={{ marginBottom: 8 }}>
-          <Space style={{ width: '100%' }} align="start">
-            <div style={{ flex: 1 }}>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
-                Nome do Header:
-              </Text>
-              <Input
-                placeholder="Ex: X-Custom-Header"
-                value={header.key}
-                onChange={(e) => updateHeader(index, 'key', e.target.value)}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
-                Valor:
-              </Text>
-              <Input
-                placeholder="Ex: meu-valor"
-                value={header.value}
-                onChange={(e) => updateHeader(index, 'value', e.target.value)}
-              />
-            </div>
-            <div>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
-                &nbsp;
-              </Text>
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => removeHeader(index)}
-                title="Remover este header"
-              >
-                Remover
-              </Button>
-            </div>
+        <div key={index} style={{
+          marginBottom: 12,
+          padding: 16,
+          border: '1px solid #d9d9d9',
+          borderRadius: 4,
+          backgroundColor: '#fafafa'
+        }}>
+          <Space style={{ width: '100%' }} direction="vertical" size="small">
+            <Space style={{ width: '100%' }}>
+              <div style={{ flex: 1 }}>
+                <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
+                  Nome do Header:
+                </Text>
+                <Input
+                  placeholder="Ex: X-Custom-Header"
+                  value={header.key}
+                  onChange={(e) => updateHeader(index, 'key', e.target.value)}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
+                  Valor:
+                </Text>
+                <Input
+                  placeholder="Ex: meu-valor"
+                  value={header.value}
+                  onChange={(e) => updateHeader(index, 'value', e.target.value)}
+                />
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
+                  &nbsp;
+                </Text>
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => removeHeader(index)}
+                  title="Remover este header"
+                />
+              </div>
+            </Space>
           </Space>
-        </Card>
+        </div>
       ))}
       <Button type="dashed" icon={<PlusOutlined />} onClick={addHeader} block>
-        ➕ Adicionar Header Extra
-      </Button>
-
-      <Divider>
-        <Space>
-          Parâmetros do Body
-          <Tooltip
-            title={
-              <div>
-                <p><strong>O que são Body Params?</strong></p>
-                <p>São dados extras enviados no corpo da requisição, geralmente para POST/PUT.</p>
-                <p><strong>Quando usar?</strong></p>
-                <p>Raramente necessário. Use apenas se a documentação da API exigir.</p>
-              </div>
-            }
-          >
-            <QuestionCircleOutlined style={{ color: '#1890ff', cursor: 'help' }} />
-          </Tooltip>
-        </Space>
-      </Divider>
-
-      <Alert
-        message="⚠️ Seção Muito Avançada - Pule se não tiver certeza"
-        description="Body params são raramente usados em tabelas de dados. Deixe em branco a menos que a documentação da API especifique."
-        type="warning"
-        showIcon
-        closable
-        style={{ marginBottom: 16 }}
-      />
-
-      {/* Body */}
-      {body.map((param, index) => (
-        <Card key={index} size="small" style={{ marginBottom: 8 }}>
-          <Space style={{ width: '100%' }} align="start">
-            <div style={{ flex: 1 }}>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
-                Nome do Parâmetro:
-              </Text>
-              <Input
-                placeholder="Ex: clientId"
-                value={param.key}
-                onChange={(e) => updateBodyParam(index, 'key', e.target.value)}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
-                Valor:
-              </Text>
-              <Input
-                placeholder="Ex: 12345"
-                value={param.value}
-                onChange={(e) => updateBodyParam(index, 'value', e.target.value)}
-              />
-            </div>
-            <div>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
-                &nbsp;
-              </Text>
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => removeBodyParam(index)}
-                title="Remover este parâmetro"
-              >
-                Remover
-              </Button>
-            </div>
-          </Space>
-        </Card>
-      ))}
-      <Button type="dashed" icon={<PlusOutlined />} onClick={addBodyParam} block>
-        ➕ Adicionar Parâmetro do Body
+        ➕ Adicionar Header Personalizado
       </Button>
     </Space>
   );
