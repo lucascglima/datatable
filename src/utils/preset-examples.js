@@ -1,6 +1,7 @@
 /**
  * Exemplos Pré-Configurados
  * Configurações prontas e funcionais para usuários não-técnicos
+ * Atualizado com novo formato de API (baseURL, path, pathParams, queryParams)
  */
 
 export const presetExamples = {
@@ -11,18 +12,12 @@ export const presetExamples = {
     config: {
       api: {
         baseURL: 'https://jsonplaceholder.typicode.com',
+        path: '/users',
+        pathParams: [],
+        queryParams: [],
         token: '',
         headers: [],
-        body: [],
       },
-      endpoints: [
-        {
-          id: 1,
-          name: 'users',
-          path: '/users',
-          method: 'GET',
-        },
-      ],
       columns: [
         {
           id: 1,
@@ -77,8 +72,6 @@ export const presetExamples = {
       },
       pagination: {
         enabled: false, // JSONPlaceholder não tem paginação
-        pageNumberParam: 'page',
-        pageSizeParam: 'limit',
         defaultPageSize: 10,
         pageSizeOptions: [10, 20, 50, 100],
         showSizeChanger: true,
@@ -102,18 +95,12 @@ alert('Nome: ' + record.name + '\\nEmail: ' + record.email);`,
     config: {
       api: {
         baseURL: 'https://jsonplaceholder.typicode.com',
+        path: '/users',
+        pathParams: [],
+        queryParams: [],
         token: '',
         headers: [],
-        body: [],
       },
-      endpoints: [
-        {
-          id: 1,
-          name: 'users',
-          path: '/users',
-          method: 'GET',
-        },
-      ],
       columns: [
         {
           id: 1,
@@ -184,8 +171,6 @@ alert('Nome: ' + record.name + '\\nEmail: ' + record.email);`,
       },
       pagination: {
         enabled: false,
-        pageNumberParam: 'page',
-        pageSizeParam: 'limit',
         defaultPageSize: 10,
         pageSizeOptions: [10, 20, 50, 100],
         showSizeChanger: true,
@@ -212,18 +197,12 @@ alert('Ação realizada para: ' + record.name);`,
     config: {
       api: {
         baseURL: 'https://jsonplaceholder.typicode.com',
+        path: '/posts',
+        pathParams: [],
+        queryParams: [],
         token: '',
         headers: [],
-        body: [],
       },
-      endpoints: [
-        {
-          id: 1,
-          name: 'posts',
-          path: '/posts',
-          method: 'GET',
-        },
-      ],
       columns: [
         {
           id: 1,
@@ -280,8 +259,6 @@ alert('Ação realizada para: ' + record.name);`,
       },
       pagination: {
         enabled: false,
-        pageNumberParam: 'page',
-        pageSizeParam: 'limit',
         defaultPageSize: 10,
         pageSizeOptions: [10, 20, 50],
         showSizeChanger: true,
@@ -293,6 +270,90 @@ alert('Ação realizada para: ' + record.name);`,
         onIconClick: `// Ação do ícone
 console.log('🎯 Ícone clicado:', record);
 alert('Post: ' + record.title);`,
+      },
+      errorHandlers: [],
+    },
+  },
+
+  // Novo exemplo: Posts com paginação
+  postsWithPagination: {
+    name: 'Posts com Paginação',
+    description: 'Lista de posts com paginação configurada (exemplo de query params dinâmicos)',
+    icon: '📄',
+    config: {
+      api: {
+        baseURL: 'https://jsonplaceholder.typicode.com',
+        path: '/posts',
+        pathParams: [],
+        queryParams: [
+          {
+            name: '_page',
+            value: '1',
+            reference: 'PAGE_CHANGE',
+            enabled: true,
+          },
+          {
+            name: '_limit',
+            value: '10',
+            reference: 'PAGE_SIZE_CHANGE',
+            enabled: true,
+          },
+        ],
+        token: '',
+        headers: [],
+      },
+      columns: [
+        {
+          id: 1,
+          title: 'ID',
+          dataIndex: 'id',
+          key: 'id',
+          sortable: true,
+          clickable: false,
+          width: 70,
+          renderType: 'default',
+          renderConfig: {},
+        },
+        {
+          id: 2,
+          title: 'Título',
+          dataIndex: 'title',
+          key: 'title',
+          sortable: true,
+          clickable: false,
+          width: 400,
+          renderType: 'default',
+          renderConfig: {},
+        },
+        {
+          id: 3,
+          title: 'User ID',
+          dataIndex: 'userId',
+          key: 'userId',
+          sortable: false,
+          clickable: false,
+          width: 100,
+          renderType: 'default',
+          renderConfig: {},
+        },
+      ],
+      mapping: {
+        dataPath: '',
+        currentPage: '',
+        totalPages: '',
+        totalItems: 'x-total-count', // JSONPlaceholder retorna total no header
+      },
+      pagination: {
+        enabled: true,
+        defaultPageSize: 10,
+        pageSizeOptions: [5, 10, 20, 50],
+        showSizeChanger: true,
+        startFrom: 1,
+      },
+      events: {
+        onRowClick: `console.log('Post selecionado:', record);`,
+        onButtonClick: '',
+        onIconClick: '',
       },
       errorHandlers: [],
     },

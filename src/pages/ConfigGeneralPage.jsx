@@ -15,7 +15,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTables } from '../contexts/TablesContext';
 import ApiConfig from '../components/ConfigPanel/ApiConfig';
 import PaginationConfig from '../components/ConfigPanel/PaginationConfig';
-import EndpointsConfig from '../components/ConfigPanel/EndpointsConfig';
 import ErrorHandlingConfig from '../components/ConfigPanel/ErrorHandlingConfig';
 
 const { Title, Paragraph } = Typography;
@@ -29,17 +28,21 @@ const ConfigGeneralPage = () => {
   const config = table?.config;
 
   const [formData, setFormData] = useState({
-    api: { baseURL: '', token: '', headers: [], body: [] },
+    api: {
+      baseURL: '',
+      path: '',
+      pathParams: [],
+      queryParams: [],
+      token: '',
+      headers: [],
+    },
     pagination: {
       enabled: true,
-      pageNumberParam: 'page',
-      pageSizeParam: 'limit',
       defaultPageSize: 20,
       pageSizeOptions: [10, 20, 50, 100],
       showSizeChanger: true,
       startFrom: 1,
     },
-    endpoints: [],
     errorHandlers: [],
   });
 
@@ -54,9 +57,15 @@ const ConfigGeneralPage = () => {
   useEffect(() => {
     if (config) {
       setFormData({
-        api: config.api || { baseURL: '', token: '', headers: [], body: [] },
+        api: config.api || {
+          baseURL: '',
+          path: '',
+          pathParams: [],
+          queryParams: [],
+          token: '',
+          headers: [],
+        },
         pagination: config.pagination || formData.pagination,
-        endpoints: config.endpoints || [],
         errorHandlers: config.errorHandlers || [],
       });
     }
@@ -113,7 +122,6 @@ const ConfigGeneralPage = () => {
         setFormData({
           api: importedConfig.api || formData.api,
           pagination: importedConfig.pagination || formData.pagination,
-          endpoints: importedConfig.endpoints || formData.endpoints,
           errorHandlers: importedConfig.errorHandlers || formData.errorHandlers,
         });
         message.success('Configuração importada com sucesso!');
@@ -163,7 +171,7 @@ const ConfigGeneralPage = () => {
               Configuração Geral
             </Title>
             <Paragraph className="page-description">
-              Configure a API, endpoints e tratamento de erros para "{table.name}".
+              Configure a API, paginação e tratamento de erros para "{table.name}".
             </Paragraph>
           </div>
           <Space className="button-group">
@@ -200,19 +208,6 @@ const ConfigGeneralPage = () => {
           <PaginationConfig
             value={formData.pagination}
             onChange={(pagination) => setFormData({ ...formData, pagination })}
-          />
-        </Card>
-      </div>
-
-      <Divider />
-
-      {/* Endpoints */}
-      <div className="section">
-        <h3 className="section-title">Endpoints Disponíveis</h3>
-        <Card>
-          <EndpointsConfig
-            value={formData.endpoints}
-            onChange={(endpoints) => setFormData({ ...formData, endpoints })}
           />
         </Card>
       </div>

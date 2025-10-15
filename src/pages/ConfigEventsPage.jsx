@@ -103,7 +103,7 @@ const ConfigEventsPage = () => {
       </div>
 
       <Card>
-        <EventsConfig value={events} onChange={setEvents} />
+        <EventsConfig value={events} onChange={(event)=> setEvents(event)} />
       </Card>
 
       {/* Footer Actions */}

@@ -3,9 +3,11 @@
  *
  * Handles generic API requests to external (non-Liferay) endpoints.
  * Supports authentication tokens, custom pagination parameters, and flexible response parsing.
+ * Updated to support new URL builder system with path params and query params
  */
 
 import axios from 'axios';
+import { buildApiUrl } from './url-builder';
 
 /**
  * Gets value from nested object using dot notation
@@ -128,68 +130,86 @@ const createExternalApiInstance = (token = '') => {
 /**
  * Fetches data from external API endpoint with customizable parameters
  *
- * @param {string} endpoint - Full API URL
- * @param {string} token - Optional authentication token
- * @param {Object} pagination - Pagination parameters
- * @param {Object} apiConfig - API configuration (param names, response paths)
+ * @param {Object} apiConfig - Complete API configuration
+ * @param {string} apiConfig.baseURL - Base URL
+ * @param {string} apiConfig.path - API path
+ * @param {Array} apiConfig.pathParams - Path parameters
+ * @param {Array} apiConfig.queryParams - Query parameters
+ * @param {string} apiConfig.token - Optional authentication token
+ * @param {Object} dynamicValues - Dynamic values for query params (page, pageSize, etc)
+ * @param {Object} mapping - Response mapping configuration
  * @returns {Promise<Object>} Response with data and pagination
  */
-export const fetchData = async (endpoint, token = '', pagination = {}, apiConfig = {}) => {
+export const fetchData = async (apiConfig = {}, dynamicValues = {}, mapping = {}) => {
   try {
+    const { token = '', headers: customHeaders = [] } = apiConfig;
+
+    console.log('🚀 [fetchData] Iniciando requisição');
+    console.log('  📋 API Config:', apiConfig);
+    console.log('  🔄 Dynamic Values:', dynamicValues);
+
+    // Cria instância do axios com token
     const api = createExternalApiInstance(token);
-    const { page = 1, pageSize = 20 } = pagination;
 
-    // Get custom parameter names or use defaults
-    const paramNames = apiConfig.apiParamNames || {
-      page: '_page',
-      pageSize: '_limit',
-      sort: 'sort',
-    };
+    // Adiciona headers personalizados
+    customHeaders.forEach(header => {
+      if (header.key && header.value) {
+        api.defaults.headers.common[header.key] = header.value;
+        console.log(`  📎 Header adicionado: ${header.key} = ${header.value}`);
+      }
+    });
 
-    // Build query parameters using custom names
-    const params = {
-      [paramNames.page]: page,
-      [paramNames.pageSize]: pageSize,
-    };
+    // Constrói URL completa usando url-builder (COM DEBUG ATIVADO)
+    const fullUrl = buildApiUrl(apiConfig, dynamicValues, true);
 
-    const response = await api.get(endpoint, { params });
+    console.log('  🌐 Fazendo requisição GET para:', fullUrl);
 
-    // Get response data path configuration
-    const responsePaths = apiConfig.responseDataPath || {
-      dataKey: '',
-      totalKey: 'x-total-count',
-      totalSource: 'header',
-    };
+    // Faz a requisição
+    const response = await api.get(fullUrl);
 
-    // Extract data using configured path
-    let data = responsePaths.dataKey
-      ? getNestedValue(response.data, responsePaths.dataKey)
+    console.log('  ✅ Resposta recebida:', response.status, response.statusText);
+    console.log('  📦 Dados recebidos:', Array.isArray(response.data) ? `Array com ${response.data.length} itens` : typeof response.data);
+
+    // Extrai dados usando configuração de mapping
+    const dataPath = mapping.dataPath || '';
+    let data = dataPath
+      ? getNestedValue(response.data, dataPath)
       : response.data;
 
-    // Ensure data is an array
+    // Garante que data é um array
     if (!Array.isArray(data)) {
       data = [data];
     }
 
-    // Extract total count based on configuration
-    let total = data.length; // Default fallback
+    // Extrai informações de paginação do mapping
+    let total = data.length; // Fallback padrão
+    let currentPage = 1;
+    let totalPages = 1;
 
-    if (responsePaths.totalSource === 'header') {
-      // Get from response headers
-      const headerValue = response.headers[responsePaths.totalKey.toLowerCase()];
-      total = headerValue ? parseInt(headerValue, 10) : data.length;
-    } else {
-      // Get from response body
-      const bodyValue = getNestedValue(response.data, responsePaths.totalKey);
-      total = bodyValue !== undefined ? parseInt(bodyValue, 10) : data.length;
+    // Total de itens
+    if (mapping.totalItems) {
+      const totalValue = getNestedValue(response.data, mapping.totalItems);
+      total = totalValue !== undefined ? parseInt(totalValue, 10) : data.length;
+    }
+
+    // Página atual
+    if (mapping.currentPage) {
+      const currentValue = getNestedValue(response.data, mapping.currentPage);
+      currentPage = currentValue !== undefined ? parseInt(currentValue, 10) : 1;
+    }
+
+    // Total de páginas
+    if (mapping.totalPages) {
+      const pagesValue = getNestedValue(response.data, mapping.totalPages);
+      totalPages = pagesValue !== undefined ? parseInt(pagesValue, 10) : 1;
     }
 
     return {
       data,
       pagination: {
-        current: page,
-        pageSize,
+        current: currentPage,
         total,
+        totalPages,
       },
       success: true,
     };
@@ -205,31 +225,45 @@ export const fetchData = async (endpoint, token = '', pagination = {}, apiConfig
 
 /**
  * Tests connection to API endpoint
+ * @param {Object} apiConfig - API configuration
+ * @param {Object} mapping - Response mapping configuration
+ * @returns {Promise<Object>} Test result
  */
-export const testConnection = async (endpoint, token = '', apiConfig = {}) => {
+export const testConnection = async (apiConfig = {}, mapping = {}) => {
   try {
+    const { token = '', headers: customHeaders = [] } = apiConfig;
+
+    console.log('🧪 [testConnection] Testando conexão');
+
+    // Cria instância do axios com token
     const api = createExternalApiInstance(token);
 
-    // Use configured param names for test
-    const paramNames = apiConfig?.apiParamNames || {
-      page: '_page',
-      pageSize: '_limit',
-    };
-
-    const response = await api.get(endpoint, {
-      params: {
-        [paramNames.pageSize]: 1,
-        [paramNames.page]: 1,
-      },
+    // Adiciona headers personalizados
+    customHeaders.forEach(header => {
+      if (header.key && header.value) {
+        api.defaults.headers.common[header.key] = header.value;
+      }
     });
 
-    // Try to extract data using configuration
-    const responsePaths = apiConfig?.responseDataPath || { dataKey: '' };
-    let data = responsePaths.dataKey
-      ? getNestedValue(response.data, responsePaths.dataKey)
+    // Testa com valores mínimos (sem paginação para simplicidade)
+    const testDynamicValues = {};
+
+    // Constrói URL completa (COM DEBUG)
+    const fullUrl = buildApiUrl(apiConfig, testDynamicValues, true);
+
+    console.log('  🌐 Testando URL:', fullUrl);
+
+    const response = await api.get(fullUrl);
+
+    console.log('  ✅ Teste bem-sucedido:', response.status);
+
+    // Tenta extrair dados usando configuração de mapping
+    const dataPath = mapping.dataPath || '';
+    let data = dataPath
+      ? getNestedValue(response.data, dataPath)
       : response.data;
 
-    // Normalize to single item for preview
+    // Normaliza para um único item para preview
     if (Array.isArray(data)) {
       data = data[0] || data;
     }
@@ -238,14 +272,15 @@ export const testConnection = async (endpoint, token = '', apiConfig = {}) => {
       success: true,
       status: response.status,
       sampleData: data,
-      message: 'Connection successful',
-      fullResponse: response.data, // Include full response for debugging
+      message: 'Conexão bem-sucedida',
+      fullResponse: response.data, // Inclui resposta completa para debug
+      url: fullUrl, // Inclui URL testada
     };
   } catch (error) {
     return {
       success: false,
       status: error.response?.status || 0,
-      message: error.response?.data?.message || error.message || 'Connection failed',
+      message: error.response?.data?.message || error.message || 'Falha na conexão',
       error: {
         code: error.code,
         message: error.message,
