@@ -1,0 +1,134 @@
+{
+  "api": {
+    "baseURL": "https://jsonplaceholder.typicode.com",
+    "token": "",
+    "headers": [
+      {
+        "key": "X-Custom-Header",
+        "value": "test-value"
+      }
+    ],
+    "body": []
+  },
+  "endpoints": [
+    {
+      "id": 1,
+      "name": "users",
+      "path": "/users",
+      "method": "GET"
+    },
+    {
+      "id": 2,
+      "name": "comments",
+      "path": "/comments",
+      "method": "GET"
+    },
+    {
+      "id": 3,
+      "name": "posts",
+      "path": "/posts",
+      "method": "GET"
+    }
+  ],
+  "columns": [
+    {
+      "id": 1,
+      "title": "ID",
+      "dataIndex": "id",
+      "key": "id",
+      "sortable": true,
+      "clickable": false,
+      "width": 80,
+      "renderType": "default",
+      "renderConfig": {}
+    },
+    {
+      "id": 2,
+      "title": "Nome",
+      "dataIndex": "name",
+      "key": "name",
+      "sortable": true,
+      "clickable": true,
+      "width": 200,
+      "renderType": "default",
+      "renderConfig": {}
+    },
+    {
+      "id": 3,
+      "title": "Email",
+      "dataIndex": "email",
+      "key": "email",
+      "sortable": true,
+      "clickable": false,
+      "width": 250,
+      "renderType": "default",
+      "renderConfig": {}
+    },
+    {
+      "id": 4,
+      "title": "Status",
+      "dataIndex": "username",
+      "key": "status",
+      "sortable": false,
+      "clickable": false,
+      "width": 120,
+      "renderType": "tags",
+      "renderConfig": {
+        "uppercase": true,
+        "colorMap": "Bret:green,Antonette:blue,Samantha:orange,Karianne:red,Kamren:purple,Leopoldo_Corkery:cyan,Elwyn.Skiles:magenta,Maxime_Nienow:gold,Delphine:lime,Moriah.Stanton:geekblue"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Ações",
+      "dataIndex": "id",
+      "key": "actions",
+      "sortable": false,
+      "clickable": false,
+      "width": 200,
+      "renderType": "buttons",
+      "renderConfig": {
+        "buttons": "Editar:primary:handleEdit,Deletar:danger:handleDelete"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Ícones",
+      "dataIndex": "id",
+      "key": "icons",
+      "sortable": false,
+      "clickable": false,
+      "width": 100,
+      "renderType": "icons",
+      "renderConfig": {
+        "icons": "EyeOutlined:#1890ff:handleView,EditOutlined:#52c41a:handleEdit,DeleteOutlined:#ff4d4f:handleDelete"
+      }
+    }
+  ],
+  "mapping": {
+    "dataPath": "",
+    "currentPage": "",
+    "totalPages": "",
+    "totalItems": ""
+  },
+  "errorHandlers": [
+    {
+      "id": 1,
+      "status": "404",
+      "message": "Recurso não encontrado",
+      "action": "alert"
+    },
+    {
+      "id": 2,
+      "status": "500",
+      "message": "Erro interno do servidor",
+      "action": "log"
+    },
+    {
+      "id": 3,
+      "status": "401",
+      "message": "Não autorizado",
+      "action": "alert"
+    }
+  ]
+}

@@ -1,0 +1,472 @@
+{
+  "_documentation": {
+    "description": "Arquivo de configuração completa do DataTable Reutilizável",
+    "version": "1.0.0",
+    "howToUse": "Faça upload deste arquivo na seção 'Configuração Geral' para aplicar todas as configurações automaticamente",
+    "author": "DataTable Team",
+    "lastUpdated": "2025-01-15"
+  },
+
+  "_comments": {
+    "general": "Este arquivo contém TODAS as configurações possíveis do DataTable",
+    "sections": [
+      "api: Configuração de endpoints, headers, body e mapeamento de resposta",
+      "columns: Definição das colunas da tabela",
+      "footer: Configuração do rodapé (paginação, total de itens)",
+      "rowClick: Comportamento ao clicar em uma linha",
+      "search: Campo de busca global",
+      "theme: Cores e tema visual",
+      "duplicateCheck: Validação de registros duplicados",
+      "sorting: Configuração de ordenação",
+      "loading: Estados de carregamento"
+    ]
+  },
+
+  "api": {
+    "_docs": {
+      "baseURL": "URL base da API (será concatenada com os endpoints)",
+      "endpoints": "Múltiplos endpoints GET que podem ser usados",
+      "headers": "Headers enviados em TODAS as requisições",
+      "body": "Body base enviado em TODAS as requisições",
+      "params": "Mapeamento de parâmetros para a API",
+      "responseMapping": "Como extrair dados da resposta da API",
+      "errorHandling": "Como tratar erros HTTP específicos"
+    },
+
+    "baseURL": "https://reqres.in/api",
+
+    "endpoints": {
+      "list": {
+        "url": "/users",
+        "method": "GET",
+        "description": "Lista todos os usuários com paginação",
+        "params": {
+          "page": "page",
+          "per_page": "per_page",
+          "search": "search"
+        }
+      },
+      "getById": {
+        "url": "/users/:id",
+        "method": "GET",
+        "description": "Busca usuário por ID"
+      }
+    },
+
+    "headers": {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "_comment": "Para autenticação, use: Authorization: Bearer {token}"
+    },
+
+    "body": {
+      "_comment": "Parâmetros enviados no body de TODAS as requisições",
+      "_example": {
+        "company_id": 123,
+        "status": "active"
+      }
+    },
+
+    "params": {
+      "_docs": {
+        "description": "Mapeamento entre parâmetros internos e nomes da API",
+        "format": "chaveInterna: nomeNaAPI"
+      },
+      "page": "page",
+      "limit": "per_page",
+      "search": "q",
+      "sort": "sort_by",
+      "order": "order"
+    },
+
+    "responseMapping": {
+      "_docs": {
+        "description": "Onde encontrar cada informação na resposta da API",
+        "format": "Use notação de ponto para acessar propriedades aninhadas",
+        "examples": [
+          "data -> response.data",
+          "total -> response.pagination.total",
+          "currentPage -> response.meta.page"
+        ]
+      },
+
+      "data": "data",
+      "total": "total",
+      "currentPage": "page",
+      "pageSize": "per_page",
+      "totalPages": "total_pages",
+
+      "_example_api_response": {
+        "page": 1,
+        "per_page": 6,
+        "total": 12,
+        "total_pages": 2,
+        "data": [
+          {
+            "id": 1,
+            "email": "george.bluth@reqres.in",
+            "first_name": "George",
+            "last_name": "Bluth",
+            "avatar": "https://reqres.in/img/faces/1-image.jpg"
+          }
+        ]
+      }
+    },
+
+    "errorHandling": {
+      "_docs": {
+        "description": "Como tratar cada tipo de erro HTTP",
+        "actions": ["redirect", "message", "modal", "function", "refresh"]
+      },
+
+      "401": {
+        "action": "redirect",
+        "redirectUrl": "/login",
+        "message": "Sua sessão expirou. Redirecionando para o login...",
+        "showNotification": true,
+        "notificationDuration": 3,
+        "refreshToken": {
+          "enabled": false,
+          "endpoint": "/auth/refresh-token",
+          "method": "POST",
+          "tokenSource": "localStorage.refreshToken",
+          "onSuccess": "retry",
+          "onFailure": "redirect"
+        }
+      },
+
+      "403": {
+        "action": "message",
+        "message": "Você não tem permissão para acessar este recurso",
+        "type": "error"
+      },
+
+      "404": {
+        "action": "message",
+        "message": "Recurso não encontrado",
+        "type": "warning"
+      },
+
+      "500": {
+        "action": "message",
+        "message": "Erro no servidor. Tente novamente mais tarde.",
+        "type": "error"
+      }
+    },
+
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "retryDelay": 1000
+  },
+
+  "columns": [
+    {
+      "_docs": {
+        "title": "Texto exibido no cabeçalho da coluna",
+        "dataIndex": "Chave do objeto de dados (ex: 'first_name')",
+        "key": "Identificador único da coluna",
+        "sortable": "Se a coluna pode ser ordenada",
+        "width": "Largura da coluna em pixels",
+        "align": "Alinhamento do texto: left, center, right",
+        "ellipsis": "Truncar texto longo com reticências",
+        "tooltip": "Mostrar tooltip ao passar o mouse"
+      },
+
+      "title": "ID",
+      "dataIndex": "id",
+      "key": "id",
+      "sortable": true,
+      "sortKeys": {
+        "asc": "id_asc",
+        "desc": "id_desc"
+      },
+      "width": 80,
+      "align": "center"
+    },
+
+    {
+      "title": "Avatar",
+      "dataIndex": "avatar",
+      "key": "avatar",
+      "sortable": false,
+      "width": 80,
+      "render": {
+        "type": "image",
+        "width": 50,
+        "height": 50,
+        "style": {
+          "borderRadius": "50%",
+          "objectFit": "cover"
+        }
+      }
+    },
+
+    {
+      "title": "Nome Completo",
+      "dataIndex": ["first_name", "last_name"],
+      "key": "full_name",
+      "separator": " ",
+      "_comment": "Junta first_name e last_name com espaço",
+      "sortable": true,
+      "ellipsis": true,
+      "tooltip": {
+        "enabled": true
+      }
+    },
+
+    {
+      "title": "Email",
+      "dataIndex": "email",
+      "key": "email",
+      "sortable": true,
+      "render": {
+        "type": "link",
+        "href": "mailto:{{value}}",
+        "target": "_blank"
+      }
+    },
+
+    {
+      "title": "Ações",
+      "key": "actions",
+      "width": 150,
+      "align": "center",
+      "buttons": [
+        {
+          "_docs": {
+            "label": "Texto do botão",
+            "type": "Tipo visual do botão (primary, default, dashed, danger, link)",
+            "icon": "Ícone do Ant Design (ex: EditOutlined)",
+            "onClick": "Função JavaScript executada ao clicar",
+            "zIndex": "z-index do botão (maior que linha para prevenir click da linha)"
+          },
+
+          "label": "Editar",
+          "type": "primary",
+          "size": "small",
+          "icon": "EditOutlined",
+          "onClick": "(record) => { console.log('Edit', record); alert(`Editando: ${record.first_name}`); }",
+          "zIndex": 10
+        },
+        {
+          "label": "Deletar",
+          "type": "danger",
+          "size": "small",
+          "icon": "DeleteOutlined",
+          "onClick": "(record) => { if(confirm(`Deletar ${record.first_name}?`)) { console.log('Delete', record); } }",
+          "zIndex": 10
+        }
+      ],
+
+      "icons": [
+        {
+          "type": "EyeOutlined",
+          "color": "#1890ff",
+          "size": 18,
+          "tooltip": "Visualizar detalhes",
+          "onClick": "(record) => { console.log('View', record); }",
+          "zIndex": 10
+        }
+      ]
+    }
+  ],
+
+  "footer": {
+    "_docs": {
+      "show": "Mostrar ou ocultar o footer completamente",
+      "components": "Configuração individual de cada componente do footer"
+    },
+
+    "show": true,
+
+    "components": {
+      "totalRecords": {
+        "show": true,
+        "source": "total",
+        "template": "Total: {total} registros",
+        "_explanation": "Busca 'total' na resposta da API e substitui {total} no template"
+      },
+
+      "totalPages": {
+        "show": true,
+        "source": "total_pages",
+        "template": "Páginas: {pages}",
+        "_variables": ["{pages}", "{current}", "{total}"]
+      },
+
+      "pagination": {
+        "show": true,
+        "paramKey": "page",
+        "currentPageSource": "page",
+        "startsAt": 1,
+        "_explanation": "Ao clicar em página 3, envia { page: 3 } para API",
+        "showSizeChanger": true,
+        "showQuickJumper": true,
+        "simple": false
+      },
+
+      "pageSize": {
+        "show": true,
+        "paramKey": "per_page",
+        "options": [6, 12, 24, 48],
+        "default": 6,
+        "_explanation": "Ao selecionar 12, envia { per_page: 12 } e reseta para página 1"
+      }
+    }
+  },
+
+  "rowClick": {
+    "_docs": {
+      "enabled": "Habilitar click nas linhas",
+      "action": "Tipo de ação (redirect, modal, function)",
+      "preventDefault": "Elementos que NÃO devem disparar o click da linha"
+    },
+
+    "enabled": true,
+    "action": "modal",
+
+    "modal": {
+      "type": "json",
+      "title": "Detalhes do Registro",
+      "width": 600
+    },
+
+    "preventDefault": ["button", "a", ".ant-btn", "icon"],
+    "_comment": "Clicar em botões, links ou ícones não dispara o click da linha"
+  },
+
+  "search": {
+    "_docs": {
+      "enabled": "Habilitar campo de busca global",
+      "placeholder": "Texto do placeholder",
+      "paramKey": "Nome do parâmetro enviado para API",
+      "debounce": "Tempo em ms para aguardar após parar de digitar",
+      "minCharacters": "Mínimo de caracteres para iniciar busca"
+    },
+
+    "enabled": true,
+    "placeholder": "Buscar usuários...",
+    "paramKey": "search",
+    "debounce": 500,
+    "minCharacters": 2,
+    "position": "top-right",
+    "width": 300,
+    "searchIn": ["first_name", "last_name", "email"],
+    "_optional": "Campos específicos onde buscar (se API suportar)"
+  },
+
+  "theme": {
+    "_docs": {
+      "colors": "Cores do tema usando variáveis do Ant Design ou hexadecimal"
+    },
+
+    "colors": {
+      "primary": "#1890ff",
+      "success": "#52c41a",
+      "warning": "#faad14",
+      "error": "#ff4d4f",
+      "info": "#1890ff",
+      "text": "#000000d9",
+      "textSecondary": "#00000073",
+      "border": "#d9d9d9",
+      "background": "#ffffff"
+    }
+  },
+
+  "duplicateCheck": {
+    "_docs": {
+      "enabled": "Habilitar verificação de duplicatas",
+      "uniqueKey": "Chave usada para verificar unicidade",
+      "action": "O que fazer ao encontrar duplicatas (warn, remove, highlight)",
+      "highlightColor": "Cor de destaque para duplicatas (apenas se action=highlight)"
+    },
+
+    "enabled": true,
+    "uniqueKey": "id",
+    "action": "warn",
+    "highlightColor": "#fff3cd",
+    "showNotification": true
+  },
+
+  "sorting": {
+    "_docs": {
+      "enabled": "Habilitar ordenação global",
+      "defaultColumn": "Coluna padrão para ordenar ao carregar",
+      "defaultOrder": "Ordem padrão (asc ou desc)",
+      "multiSort": "Permitir ordenação por múltiplas colunas"
+    },
+
+    "enabled": true,
+    "defaultColumn": null,
+    "defaultOrder": "asc",
+    "multiSort": false
+  },
+
+  "loading": {
+    "_docs": {
+      "text": "Texto exibido durante carregamento",
+      "spinSize": "Tamanho do spinner (small, default, large)",
+      "delay": "Delay em ms antes de mostrar loading"
+    },
+
+    "text": "Carregando dados...",
+    "spinSize": "default",
+    "delay": 200
+  },
+
+  "additionalParams": [
+    {
+      "_docs": {
+        "key": "Nome do parâmetro enviado para API",
+        "value": "Valor do parâmetro",
+        "source": "Origem do valor (fixed, context, state, dynamic)",
+        "enabled": "Se este parâmetro está ativo"
+      },
+
+      "key": "company_id",
+      "value": "123",
+      "source": "fixed",
+      "enabled": true,
+      "_explanation": "Sempre envia company_id=123 em todas as requisições"
+    },
+    {
+      "key": "user_role",
+      "value": "currentUser.role",
+      "source": "context",
+      "enabled": false,
+      "_explanation": "Busca do contexto da aplicação"
+    }
+  ],
+
+  "_examples": {
+    "simple_table": {
+      "description": "Exemplo de configuração mínima para tabela simples",
+      "config": {
+        "api": {
+          "baseURL": "https://reqres.in/api",
+          "endpoints": {
+            "list": {
+              "url": "/users",
+              "method": "GET"
+            }
+          }
+        },
+        "columns": [
+          {
+            "title": "Nome",
+            "dataIndex": "first_name",
+            "key": "first_name"
+          },
+          {
+            "title": "Email",
+            "dataIndex": "email",
+            "key": "email"
+          }
+        ],
+        "footer": {
+          "show": true
+        }
+      }
+    }
+  }
+}

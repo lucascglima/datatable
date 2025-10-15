@@ -82,3 +82,105 @@ code {
   border-radius: 3px;
   font-size: 0.9em;
 }
+
+/* Espaçamento consistente em cards */
+.ant-card {
+  margin-bottom: 24px;
+}
+
+.ant-card-head {
+  font-weight: 600;
+}
+
+/* Formulários mais espaçados */
+.ant-form-item {
+  margin-bottom: 24px;
+}
+
+/* Scrollbar customizada global */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Loading skeleton smooth */
+.ant-skeleton {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Page container styles */
+.page-container {
+  padding: 24px;
+  min-height: calc(100vh - 64px);
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.page-description {
+  color: #8c8c8c;
+  margin: 0;
+}
+
+/* Section styles */
+.section {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #262626;
+}
+
+/* Button group spacing */
+.button-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  background: white;
+  border-radius: 8px;
+}
+
+.empty-state-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+}
+
+.empty-state-description {
+  color: #8c8c8c;
+  margin-bottom: 24px;
+}

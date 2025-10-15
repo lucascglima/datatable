@@ -17,6 +17,81 @@ const getNestedValue = (obj, path) => {
 };
 
 /**
+ * Loads token expiration configuration from localStorage
+ */
+const loadTokenExpirationConfig = () => {
+  try {
+    const stored = localStorage.getItem('dxp-token-expiration-config');
+    if (!stored) return null;
+    return JSON.parse(stored);
+  } catch (error) {
+    console.error('Error loading token expiration config:', error);
+    return null;
+  }
+};
+
+/**
+ * Handles token expiration based on configuration
+ */
+const handleTokenExpiration = (error, config) => {
+  if (!config || !config.enabled) {
+    return;
+  }
+
+  let isExpired = false;
+
+  // Check based on detection type
+  if (config.detectType === 'statusCode') {
+    const statusCodes = config.statusCodes || [401, 403];
+    isExpired = statusCodes.includes(error.response?.status);
+  } else if (config.detectType === 'responseProperty') {
+    const propertyPath = config.propertyPath || 'error.code';
+    const expectedValue = config.propertyValue || 'TOKEN_EXPIRED';
+    const actualValue = getNestedValue(error.response?.data, propertyPath);
+    isExpired = actualValue === expectedValue;
+  } else if (config.detectType === 'customFunction') {
+    try {
+      if (config.functionName && typeof window[config.functionName] === 'function') {
+        isExpired = window[config.functionName](error);
+      }
+    } catch (err) {
+      console.error('Error executing custom token detection function:', err);
+    }
+  }
+
+  if (isExpired) {
+    console.log('Token expired detected, redirecting...', {
+      timestamp: new Date().toISOString(),
+      error: error.message,
+      status: error.response?.status,
+    });
+
+    // Show message if configured
+    if (config.message) {
+      alert(config.message);
+    }
+
+    // Clear storage if configured
+    if (config.clearStorage) {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (err) {
+        console.error('Error clearing storage:', err);
+      }
+    }
+
+    // Redirect after delay
+    const delay = (config.redirectDelay || 0) * 1000;
+    setTimeout(() => {
+      if (config.redirectUrl) {
+        window.location.href = config.redirectUrl;
+      }
+    }, delay);
+  }
+};
+
+/**
  * Creates an axios instance for external API calls
  */
 const createExternalApiInstance = (token = '') => {
@@ -35,7 +110,19 @@ const createExternalApiInstance = (token = '') => {
     config.headers.Authorization = authToken;
   }
 
-  return axios.create(config);
+  const instance = axios.create(config);
+
+  // Add response interceptor for token expiration detection
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const tokenConfig = loadTokenExpirationConfig();
+      handleTokenExpiration(error, tokenConfig);
+      return Promise.reject(error);
+    }
+  );
+
+  return instance;
 };
 
 /**

@@ -35,6 +35,13 @@ export default [
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'indent': ['error', 2, { 'SwitchCase': 1 }],
+      'max-len': ['warn', { 'code': 120, 'ignoreStrings': true, 'ignoreTemplateLiterals': true }],
+      'quotes': ['error', 'single', { 'avoidEscape': true, 'allowTemplateLiterals': true }],
+      'semi': ['error', 'always'],
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'prefer-const': 'error',
+      'no-var': 'error',
     },
     settings: {
       react: {

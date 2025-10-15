@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
+import os from 'os';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Use cache directory outside OneDrive to avoid permission issues
+  cacheDir: path.join(os.tmpdir(), 'vite-datatable-cache'),
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -24,6 +28,11 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    // Additional server options to avoid OneDrive conflicts
+    watch: {
+      usePolling: false,
+      ignored: ['**/node_modules/**', '**/.git/**'],
+    },
   },
   define: {
     // Make global variables available

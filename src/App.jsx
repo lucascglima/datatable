@@ -1,27 +1,22 @@
 /**
- * App Component
- *
- * Main application component with navigation and routing.
- * Provides visual no-code configuration interface for DataTable.
+ * App Component - Application with Router and Layout
  */
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider, Layout } from 'antd';
-import NavigationMenu from './components/navigation/NavigationMenu';
-import ExamplePage from './pages/example-page';
-import ConfigurationPage from './pages/configuration-page';
-import DataTablePage from './pages/datatable-page';
+import { ConfigProvider } from 'antd';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { TablesProvider } from './contexts/TablesContext';
+import MainLayout from './layouts/MainLayout';
+import TablesListPage from './pages/TablesListPage';
+import TableViewPage from './pages/TableViewPage';
+import ExamplesGalleryPage from './pages/ExamplesGalleryPage';
+import ConfigGeneralPage from './pages/ConfigGeneralPage';
+import ConfigColumnsPage from './pages/ConfigColumnsPage';
+import ConfigMappingPage from './pages/ConfigMappingPage';
+import ConfigEventsPage from './pages/ConfigEventsPage';
+import DocumentationPage from './pages/DocumentationPage';
 
-const { Header, Content } = Layout;
-
-/**
- * App Component
- *
- * Root component with navigation and routing
- */
 const App = () => {
-  // Ant Design theme configuration
   const theme = {
     token: {
       colorPrimary: '#1890ff',
@@ -32,42 +27,35 @@ const App = () => {
 
   return (
     <ConfigProvider theme={theme}>
-      <Router>
-        <Layout style={{ minHeight: '100vh' }}>
-          {/* Navigation Header */}
-          <Header
-            style={{
-              background: '#fff',
-              padding: 0,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            }}
-          >
-            <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
-              <NavigationMenu />
-            </div>
-          </Header>
-
-          {/* Main Content */}
-          <Content style={{ background: '#f0f2f5' }}>
+      <TablesProvider>
+        <BrowserRouter>
+          <MainLayout>
             <Routes>
-              {/* Default route - Example Page */}
-              <Route path="/" element={<Navigate to="/example" replace />} />
+              {/* Redirect root to tables list */}
+              <Route path="/" element={<Navigate to="/tables" replace />} />
 
-              {/* Example Page - Demo with clickable cells */}
-              <Route path="/example" element={<ExamplePage />} />
+              {/* Tables Management */}
+              <Route path="/tables" element={<TablesListPage />} />
+              <Route path="/table/:tableId" element={<TableViewPage />} />
 
-              {/* Configuration Page - Visual no-code setup */}
-              <Route path="/configuration" element={<ConfigurationPage />} />
+              {/* Examples (QuickStart) */}
+              <Route path="/examples" element={<ExamplesGalleryPage />} />
 
-              {/* DataTable Page - User's configured table */}
-              <Route path="/datatable" element={<DataTablePage />} />
+              {/* Configuration (for specific table) */}
+              <Route path="/config/:tableId/general" element={<ConfigGeneralPage />} />
+              <Route path="/config/:tableId/columns" element={<ConfigColumnsPage />} />
+              <Route path="/config/:tableId/mapping" element={<ConfigMappingPage />} />
+              <Route path="/config/:tableId/events" element={<ConfigEventsPage />} />
 
-              {/* Redirect unknown routes to example */}
-              <Route path="*" element={<Navigate to="/example" replace />} />
+              {/* Documentation */}
+              <Route path="/documentation" element={<DocumentationPage />} />
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/tables" replace />} />
             </Routes>
-          </Content>
-        </Layout>
-      </Router>
+          </MainLayout>
+        </BrowserRouter>
+      </TablesProvider>
     </ConfigProvider>
   );
 };
