@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm install dompurify)",
+      "Bash(npm run build)",
+      "Bash(for file in components/configuration-form/*.jsx)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(head:*)",
+      "Bash(done)",
+      "Bash(while read file)",
+      "Bash(do basename \"$file\")",
+      "Bash(cat:*)",
+      "Bash(npm run dev)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
