@@ -31,6 +31,7 @@ const DxpTable = ({
   onPaginationChange,
   rowKey,
   paginationEnabled = true,
+  rowClickable = false,
 }) => {
   /**
    * Process header configuration and get columns with sort handler
@@ -41,10 +42,13 @@ const DxpTable = ({
    * Handles row click events
    */
   const handleRowClick = (record) => {
+    if (!onRowClick) return {};
+
     return {
       onClick: () => {
         onRowClick(record);
       },
+      style: rowClickable ? { cursor: 'pointer' } : {},
     };
   };
 

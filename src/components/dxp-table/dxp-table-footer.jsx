@@ -71,7 +71,6 @@ const DxpTableFooter = ({
         total={total}
         pageSizeOptions={pageSizeOptions}
         showSizeChanger
-        showQuickJumper
         onChange={handlePaginationChange}
         onShowSizeChange={handlePaginationChange}
         showTotal={(total) => `Total ${total} items`}

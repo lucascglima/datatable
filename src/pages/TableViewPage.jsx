@@ -14,6 +14,7 @@ import { fetchData } from '../services/external-api';
 import { buildTableColumns } from '../utils/column-renderer.jsx';
 import { executeCustomEvent } from '../utils/event-handler';
 import { getFriendlyError } from '../utils/friendly-messages';
+import { executeAction, findActionByIdentifier } from '../utils/action-builder.jsx';
 
 const { Title, Paragraph } = Typography;
 
@@ -159,6 +160,32 @@ const TableViewPage = () => {
    * Handler para click em linha
    */
   const handleRowClick = (record) => {
+    // PRIORIDADE 1: Verifica se há configuração de rowClick nova (visual)
+    if (config?.events?.rowClick?.enabled && config?.events?.rowClick?.selectedAction) {
+      const actionIdentifier = config.events.rowClick.selectedAction;
+      const clickActions = config.events.clickActions || [];
+      const action = findActionByIdentifier(clickActions, actionIdentifier);
+
+      if (action) {
+        console.log('✨ [Row Click] Executando ação visual:', actionIdentifier);
+        const actionContext = {
+          navigate,
+          onSuccess: (data, record) => {
+            console.log('✅ [Row Click Action] Sucesso:', data);
+            handleReload();
+          },
+          onError: (error, record) => {
+            console.error('❌ [Row Click Action] Erro:', error);
+          },
+        };
+        executeAction(action, record, actionContext);
+        return;
+      } else {
+        console.warn(`⚠️ Ação "${actionIdentifier}" não encontrada em clickActions`);
+      }
+    }
+
+    // PRIORIDADE 2: Fallback para código JS legado (onRowClick)
     if (config?.events?.onRowClick) {
       try {
         executeCustomEvent(config.events.onRowClick, { record });
@@ -174,7 +201,22 @@ const TableViewPage = () => {
   const getColumns = () => {
     if (config && config.columns && config.columns.length > 0) {
       const eventHandlers = config.events || {};
-      return buildTableColumns(config.columns, eventHandlers);
+      const clickActions = config.events?.clickActions || [];
+
+      // Contexto para ações (inclui navigate e callbacks)
+      const actionContext = {
+        navigate,
+        onSuccess: (data, record) => {
+          console.log('✅ [Action] Sucesso:', data);
+          // Recarrega dados após ação bem-sucedida
+          handleReload();
+        },
+        onError: (error, record) => {
+          console.error('❌ [Action] Erro:', error);
+        },
+      };
+
+      return buildTableColumns(config.columns, eventHandlers, clickActions, actionContext);
     }
 
     if (!data || data.length === 0) return [];
@@ -234,7 +276,7 @@ const TableViewPage = () => {
                 <Button
                   type="primary"
                   icon={<SettingOutlined />}
-                  onClick={() => navigate(`/config/${tableId}/general`)}
+                  onClick={() => navigate(`/config/${tableId}`)}
                 >
                   Configurar Agora
                 </Button>
@@ -282,7 +324,7 @@ const TableViewPage = () => {
             <Button
               type="primary"
               icon={<SettingOutlined />}
-              onClick={() => navigate(`/config/${tableId}/general`)}
+              onClick={() => navigate(`/config/${tableId}`)}
             >
               Configurar
             </Button>
@@ -314,7 +356,8 @@ const TableViewPage = () => {
               }
             }}
             rowKey={(record) => record.id || record.key || Math.random()}
-            onRowClick={handleRowClick}
+            onRowClick={config?.events?.rowClick?.enabled ? handleRowClick : null}
+            rowClickable={config?.events?.rowClick?.enabled || false}
             onSort={(sorter) => {
               console.log('🔀 Sort:', sorter);
               // TODO: Implementar ordenação quando necessário

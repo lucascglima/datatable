@@ -15,11 +15,20 @@ import {
   EyeOutlined,
   PlusOutlined,
   SettingOutlined,
+  ArrowRightOutlined,
 } from '@ant-design/icons';
 
 const { Title, Paragraph, Text } = Typography;
 
-const ConfigSavedModal = ({ visible, onClose, tableName, onViewTable, onCreateAnother }) => {
+const ConfigSavedModal = ({
+  visible,
+  onClose,
+  tableName,
+  onViewTable,
+  onCreateAnother,
+  onNextSection,
+  showNextSection = false,
+}) => {
   return (
     <Modal
       open={visible}
@@ -66,7 +75,25 @@ const ConfigSavedModal = ({ visible, onClose, tableName, onViewTable, onCreateAn
               Visualize sua tabela com os dados da API configurada
             </Text>
 
-            {/* Opção 2: Criar Outra Tabela */}
+            {/* Opção 2: Ir para Próxima Seção (condicional) */}
+            {showNextSection && onNextSection && (
+              <>
+                <Button
+                  size="large"
+                  icon={<ArrowRightOutlined />}
+                  block
+                  onClick={onNextSection}
+                  style={{ marginTop: 8 }}
+                >
+                  Ir para Próxima Seção
+                </Button>
+                <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '-8px' }}>
+                  Continue configurando a próxima etapa do wizard
+                </Text>
+              </>
+            )}
+
+            {/* Opção 3: Criar Outra Tabela */}
             <Button
               size="large"
               icon={<PlusOutlined />}

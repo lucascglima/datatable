@@ -182,7 +182,7 @@ export const getTableStats = (table) => {
   return {
     columns: columns?.length || 0,
     endpoints: endpoints?.length || 0,
-    events: Object.values(events || {}).filter((e) => e && e.trim() !== '').length,
+    events: Object.values(events || {}).filter((e) => e && e?.trim() !== '').length,
     hasAuth: !!(api.token && api.token.trim() !== ''),
   };
 };

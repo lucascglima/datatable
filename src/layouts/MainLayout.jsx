@@ -88,31 +88,10 @@ const MainLayout = ({ children }) => {
     // Configuration section (only if there's an active table)
     if (activeTableId) {
       items.push({
-        key: 'config',
+        key: `/config/${activeTableId}`,
         icon: <SettingOutlined />,
         label: 'Configurar Tabela Atual',
-        children: [
-          {
-            key: `/config/${activeTableId}/general`,
-            label: 'Geral',
-            onClick: () => navigate(`/config/${activeTableId}/general`),
-          },
-          {
-            key: `/config/${activeTableId}/columns`,
-            label: 'Colunas',
-            onClick: () => navigate(`/config/${activeTableId}/columns`),
-          },
-          {
-            key: `/config/${activeTableId}/mapping`,
-            label: 'Mapeamento',
-            onClick: () => navigate(`/config/${activeTableId}/mapping`),
-          },
-          {
-            key: `/config/${activeTableId}/events`,
-            label: 'Eventos',
-            onClick: () => navigate(`/config/${activeTableId}/events`),
-          },
-        ],
+        onClick: () => navigate(`/config/${activeTableId}`),
       });
     }
 
@@ -157,12 +136,14 @@ const MainLayout = ({ children }) => {
         items.push({ key: 'table', title: table.name });
       }
     } else if (path.startsWith('/config/')) {
-      const tableId = path.split('/')[2];
+      const pathParts = path.split('/');
+      const tableId = pathParts[2];
       const table = tables.find((t) => t.id === tableId);
       items.push({ key: 'config', title: 'Configuração' });
       if (table) {
         items.push({ key: 'table', title: table.name });
       }
+      // Legacy breadcrumbs for old config pages
       if (path.includes('/general')) items.push({ key: 'general', title: 'Geral' });
       if (path.includes('/columns')) items.push({ key: 'columns', title: 'Colunas' });
       if (path.includes('/mapping')) items.push({ key: 'mapping', title: 'Mapeamento' });

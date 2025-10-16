@@ -94,12 +94,7 @@ const ColumnsJsonEditor = ({ value = [], onChange }) => {
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <Alert
-        message="Modo JSON"
-        description="Cole ou edite o JSON das colunas diretamente. O formato segue o padrão do Ant Design Table."
-        type="info"
-        showIcon
-      />
+     
 
       {/* Exemplo de estrutura */}
       <Card size="small" title="📋 Estrutura Esperada">

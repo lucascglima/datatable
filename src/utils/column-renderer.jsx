@@ -7,6 +7,7 @@ import React from 'react';
 import { Tag, Button, Space } from 'antd';
 import * as Icons from '@ant-design/icons';
 import { executeCustomEvent } from './event-handler';
+import { executeAction, findActionByIdentifier } from './action-builder.jsx';
 
 /**
  * Parses color map string into object
@@ -68,12 +69,24 @@ const renderTags = (text, record, config) => {
 /**
  * Renders buttons
  */
-const renderButtons = (text, record, buttons, eventHandler) => {
+const renderButtons = (text, record, buttons, eventHandler, clickActions, context) => {
   return (
     <Space size="small">
       {buttons.map((btn, index) => {
         const handleClick = (event) => {
-          // First try custom event handler
+          event.stopPropagation(); // Prevent row click
+
+          // PRIORIDADE 1: Tentar encontrar ação visual pelo identifier
+          if (clickActions && btn.funcName) {
+            const action = findActionByIdentifier(clickActions, btn.funcName);
+            if (action) {
+              console.log('✨ [Column] Executando ação visual:', btn.funcName);
+              executeAction(action, record, context);
+              return;
+            }
+          }
+
+          // PRIORIDADE 2: Tentar custom event handler
           if (eventHandler) {
             try {
               executeCustomEvent(eventHandler, { record, value: text, event });
@@ -83,11 +96,11 @@ const renderButtons = (text, record, buttons, eventHandler) => {
             }
           }
 
-          // Fallback to legacy global function
+          // PRIORIDADE 3: Fallback para função global (legado)
           if (btn.funcName && typeof window[btn.funcName] === 'function') {
             window[btn.funcName](record, text);
           } else {
-            console.warn(`Function ${btn.funcName} not found in global scope`);
+            console.warn(`⚠️ Nenhuma ação encontrada para: ${btn.funcName}`);
           }
         };
 
@@ -104,7 +117,7 @@ const renderButtons = (text, record, buttons, eventHandler) => {
 /**
  * Renders icons
  */
-const renderIcons = (text, record, icons, eventHandler) => {
+const renderIcons = (text, record, icons, eventHandler, clickActions, context) => {
   return (
     <Space size="small">
       {icons.map((icon, index) => {
@@ -116,7 +129,19 @@ const renderIcons = (text, record, icons, eventHandler) => {
         }
 
         const handleClick = (event) => {
-          // First try custom event handler
+          event.stopPropagation(); // Prevent row click
+
+          // PRIORIDADE 1: Tentar encontrar ação visual pelo identifier
+          if (clickActions && icon.funcName) {
+            const action = findActionByIdentifier(clickActions, icon.funcName);
+            if (action) {
+              console.log('✨ [Column] Executando ação visual:', icon.funcName);
+              executeAction(action, record, context);
+              return;
+            }
+          }
+
+          // PRIORIDADE 2: Tentar custom event handler
           if (eventHandler) {
             try {
               executeCustomEvent(eventHandler, { record, value: text, event });
@@ -126,11 +151,11 @@ const renderIcons = (text, record, icons, eventHandler) => {
             }
           }
 
-          // Fallback to legacy global function
+          // PRIORIDADE 3: Fallback para função global (legado)
           if (icon.funcName && typeof window[icon.funcName] === 'function') {
             window[icon.funcName](record, text);
           } else {
-            console.warn(`Function ${icon.funcName} not found in global scope`);
+            console.warn(`⚠️ Nenhuma ação encontrada para: ${icon.funcName}`);
           }
         };
 
@@ -149,7 +174,7 @@ const renderIcons = (text, record, icons, eventHandler) => {
 /**
  * Creates a render function based on column configuration
  */
-export const createColumnRenderer = (column, eventHandlers = {}) => {
+export const createColumnRenderer = (column, eventHandlers = {}, clickActions = [], context = {}) => {
   const { renderType, renderConfig = {} } = column;
 
   switch (renderType) {
@@ -161,12 +186,26 @@ export const createColumnRenderer = (column, eventHandlers = {}) => {
 
     case 'buttons': {
       const buttons = parseButtons(renderConfig.buttons);
-      return (text, record) => renderButtons(text, record, buttons, eventHandlers.onButtonClick);
+      return (text, record) => renderButtons(
+        text,
+        record,
+        buttons,
+        eventHandlers.onButtonClick,
+        clickActions,
+        context
+      );
     }
 
     case 'icons': {
       const icons = parseIcons(renderConfig.icons);
-      return (text, record) => renderIcons(text, record, icons, eventHandlers.onIconClick);
+      return (text, record) => renderIcons(
+        text,
+        record,
+        icons,
+        eventHandlers.onIconClick,
+        clickActions,
+        context
+      );
     }
 
     case 'custom': {
@@ -189,7 +228,7 @@ export const createColumnRenderer = (column, eventHandlers = {}) => {
 /**
  * Converts column configuration array into Ant Design columns format
  */
-export const buildTableColumns = (columnsConfig, eventHandlers = {}) => {
+export const buildTableColumns = (columnsConfig, eventHandlers = {}, clickActions = [], context = {}) => {
   return columnsConfig.map((column) => {
     const antColumn = {
       title: column.title,
@@ -203,12 +242,13 @@ export const buildTableColumns = (columnsConfig, eventHandlers = {}) => {
         }
         return aVal - bVal;
       } : undefined,
+      showSorterTooltip: column.sortable ? { title: 'Clique para ordenar' } : false,
       width: column.width,
     };
 
     // Add render function if not default
     if (column.renderType && column.renderType !== 'default') {
-      antColumn.render = createColumnRenderer(column, eventHandlers);
+      antColumn.render = createColumnRenderer(column, eventHandlers, clickActions, context);
     }
 
     // Add click handler if clickable

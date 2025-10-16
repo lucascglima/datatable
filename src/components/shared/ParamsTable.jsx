@@ -213,7 +213,7 @@ const ParamsTable = ({
         block
         style={{ marginTop: 8 }}
       >
-        ➕ Adicionar {type === 'query' ? 'Query' : 'Path'} Param
+        Adicionar {type === 'query' ? 'Query' : 'Path'} Param
       </Button>
     </div>
   );

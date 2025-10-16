@@ -198,40 +198,6 @@ const ConfigGeneralPage = () => {
           />
         </Card>
       </div>
-
-      <Divider />
-
-      {/* Pagination Configuration */}
-      <div className="section">
-        <h3 className="section-title">Configuração de Paginação</h3>
-        <Card>
-          <PaginationConfig
-            value={formData.pagination}
-            onChange={(pagination) => setFormData({ ...formData, pagination })}
-          />
-        </Card>
-      </div>
-
-      <Divider />
-
-      {/* Error Handling */}
-      <div className="section">
-        <h3 className="section-title">Tratamento de Erros</h3>
-        <Card>
-          <ErrorHandlingConfig
-            value={formData.errorHandlers}
-            onChange={(errorHandlers) => setFormData({ ...formData, errorHandlers })}
-          />
-        </Card>
-      </div>
-
-      {/* Footer Actions */}
-      <div style={{ marginTop: 32, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-        <Button onClick={() => navigate(`/table/${tableId}`)}>Cancelar</Button>
-        <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
-          Salvar Configuração
-        </Button>
-      </div>
     </div>
   );
 };

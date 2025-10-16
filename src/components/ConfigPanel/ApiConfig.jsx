@@ -114,7 +114,7 @@ const ApiConfig = ({ value = {}, onChange }) => {
         }
         help={
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            💡 Ex: /users ou /users/{':userId'} (use {'{variavel}'} para valores dinâmicos)
+            💡 Ex: /users ou /users/{':userId'} 
           </Text>
         }
       >
@@ -326,7 +326,7 @@ const ApiConfig = ({ value = {}, onChange }) => {
         </div>
       ))}
       <Button type="dashed" icon={<PlusOutlined />} onClick={addHeader} block>
-        ➕ Adicionar Header Personalizado
+        Adicionar Header Personalizado
       </Button>
     </Space>
   );
