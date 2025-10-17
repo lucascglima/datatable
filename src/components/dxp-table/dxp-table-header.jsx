@@ -11,9 +11,11 @@ import { dxpTableHeaderPropTypes, dxpTableHeaderDefaultProps } from './dxp-table
  * @param {Array} props.columns - Array of column configurations
  * @param {Function} props.onSort - Callback function when column is sorted
  * @param {Object} props.sortingConfig - Optional sorting configuration (defaultColumn, defaultOrder, sortKeys)
+ * @param {string} props.currentSortField - Current active sort field key
+ * @param {string} props.currentSortOrder - Current active sort order ('ascend' or 'descend')
  * @returns {Array} Processed columns for Ant Design Table
  */
-const DxpTableHeader = ({ columns, onSort, sortingConfig = {} }) => {
+const DxpTableHeader = ({ columns, onSort, sortingConfig = {}, currentSortField = null, currentSortOrder = null }) => {
   /**
    * Validates that essential column properties are present
    */
@@ -79,10 +81,18 @@ const DxpTableHeader = ({ columns, onSort, sortingConfig = {} }) => {
           antColumn.sorter = true;
           antColumn.sortDirections = ['ascend', 'descend'];
 
-          // Set default sort order if this is the default column
-          const defaultOrder = getDefaultSortOrder(column.key);
-          if (defaultOrder) {
-            antColumn.defaultSortOrder = defaultOrder;
+          // Se esta coluna está sendo ordenada atualmente, define sortOrder
+          if (currentSortField === column.key && currentSortOrder) {
+            antColumn.sortOrder = currentSortOrder;
+          } else if (currentSortField === null || currentSortField === undefined) {
+            // Se não há ordenação ativa, usa defaultSortOrder se configurado
+            const defaultOrder = column.defaultSortOrder || getDefaultSortOrder(column.key);
+            if (defaultOrder) {
+              antColumn.defaultSortOrder = defaultOrder;
+            }
+          } else {
+            // Esta coluna não está sendo ordenada, remove qualquer indicação de sort
+            antColumn.sortOrder = false;
           }
         }
 

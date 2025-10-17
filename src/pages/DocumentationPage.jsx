@@ -5,13 +5,15 @@
 
 import React from 'react';
 import { Typography } from 'antd';
-import { useConfig } from '../contexts/ConfigContext';
+import { useTables } from '../contexts/TablesContext';
 import DocumentationTab from '../components/ConfigPanel/DocumentationTab';
 
 const { Title, Paragraph } = Typography;
 
 const DocumentationPage = () => {
-  const { config } = useConfig();
+  const { getActiveTable } = useTables();
+  const activeTable = getActiveTable();
+  const config = activeTable?.config || null;
 
   return (
     <div className="page-container">

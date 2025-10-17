@@ -634,23 +634,44 @@ return renderCell;`}
             </Form.Item>
 
             {/* Column Options */}
-            <Space size="large">
-              <Form.Item label="Ordenável" help="Permite ordenar a tabela por esta coluna">
-                <Switch
-                  checked={column.sortable}
-                  onChange={(checked) => updateColumn(column.id, { sortable: checked })}
-                />
-              </Form.Item>
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              <Space size="large">
+                <Form.Item label="Ordenável" help="Permite ordenar a tabela por esta coluna">
+                  <Switch
+                    checked={column.sortable}
+                    onChange={(checked) => updateColumn(column.id, { sortable: checked })}
+                  />
+                </Form.Item>
 
-              <Form.Item label="Largura (px)" help="Largura fixa da coluna em pixels">
-                <InputNumber
-                  placeholder="100"
-                  min={50}
-                  max={1000}
-                  value={column.width}
-                  onChange={(val) => updateColumn(column.id, { width: val })}
-                />
-              </Form.Item>
+                <Form.Item label="Largura (px)" help="Largura fixa da coluna em pixels">
+                  <InputNumber
+                    placeholder="100"
+                    min={50}
+                    max={1000}
+                    value={column.width}
+                    onChange={(val) => updateColumn(column.id, { width: val })}
+                  />
+                </Form.Item>
+              </Space>
+
+              {/* Configuração de Ordenação Padrão */}
+              {column.sortable && (
+                <Form.Item
+                  label="Ordenação Inicial (Opcional)"
+                  help="Define se esta coluna deve iniciar ordenada"
+                >
+                  <Select
+                    placeholder="Sem ordenação inicial"
+                    value={column.defaultSortOrder || null}
+                    onChange={(val) => updateColumn(column.id, { defaultSortOrder: val })}
+                    allowClear
+                    style={{ width: '100%' }}
+                  >
+                    <Option value="ascend">Ascendente (A → Z, 0 → 9)</Option>
+                    <Option value="descend">Descendente (Z → A, 9 → 0)</Option>
+                  </Select>
+                </Form.Item>
+              )}
             </Space>
 
             <Divider>Renderização</Divider>

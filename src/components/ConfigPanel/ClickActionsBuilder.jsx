@@ -9,9 +9,7 @@ import { Card, Button, Space, Empty, Typography, Tag, Popconfirm, List } from 'a
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
-  LinkOutlined,
+  DeleteOutlined,  
   ApiOutlined,
   CodeOutlined,
   DownloadOutlined,

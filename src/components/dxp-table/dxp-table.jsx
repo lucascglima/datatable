@@ -20,6 +20,8 @@ import { dxpTablePropTypes, dxpTableDefaultProps } from './dxp-table.types';
  * @param {Function} props.onPaginationChange - Callback when pagination changes
  * @param {string} props.rowKey - Unique key for each row
  * @param {boolean} props.paginationEnabled - Controls footer visibility
+ * @param {string} props.currentSortField - Current active sort field
+ * @param {string} props.currentSortOrder - Current active sort order
  */
 const DxpTable = ({
   columns,
@@ -32,11 +34,18 @@ const DxpTable = ({
   rowKey,
   paginationEnabled = true,
   rowClickable = false,
+  currentSortField = null,
+  currentSortOrder = null,
 }) => {
   /**
    * Process header configuration and get columns with sort handler
    */
-  const headerConfig = DxpTableHeader({ columns, onSort });
+  const headerConfig = DxpTableHeader({
+    columns,
+    onSort,
+    currentSortField,
+    currentSortOrder
+  });
 
   /**
    * Handles row click events

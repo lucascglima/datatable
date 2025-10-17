@@ -3,24 +3,7 @@
  * Executa código JavaScript customizado de forma segura
  */
 
-/**
- * Valida código JavaScript
- * @param {string} code - Código JavaScript
- * @returns {object} { valid: boolean, error: string|null }
- */
-export const validateJavaScript = (code) => {
-  if (!code || code.trim() === '') {
-    return { valid: true, error: null };
-  }
-
-  try {
-    // Tenta criar uma função para validar a sintaxe
-    new Function(code);
-    return { valid: true, error: null };
-  } catch (error) {
-    return { valid: false, error: error.message };
-  }
-};
+import { validateJavaScript } from './validators';
 
 /**
  * Executa código JavaScript customizado
@@ -95,7 +78,6 @@ export const getValidationError = (code) => {
 };
 
 export default {
-  validateJavaScript,
   executeCustomEvent,
   createRowClickHandler,
   createButtonClickHandler,

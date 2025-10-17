@@ -42,16 +42,6 @@ const ApiConfig = ({ value = {}, onChange }) => {
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      {/* Help Alert */}
-      <Alert
-        message="🌐 Configuração da API"
-        description="Configure o endereço da API e os parâmetros que serão enviados nas requisições. Use variáveis dinâmicas no path e configure parâmetros de consulta que se atualizam automaticamente."
-        type="info"
-        showIcon
-        icon={<InfoCircleOutlined />}
-        closable
-      />
-
       {/* Base URL */}
       <Form.Item
         label={
@@ -146,16 +136,6 @@ const ApiConfig = ({ value = {}, onChange }) => {
           </Tooltip>
         </Space>
       </Divider>
-
-      <Alert
-        message="ℹ️ Quando usar?"
-        description="Use Path Params quando você tiver variáveis no path (ex: {userId}). Cada variável no path precisa ter um valor correspondente aqui."
-        type="info"
-        showIcon
-        closable
-        style={{ marginBottom: 16 }}
-      />
-
       <ParamsTable
         params={pathParams}
         onChange={(newParams) => updateConfig({ pathParams: newParams })}
@@ -186,16 +166,6 @@ const ApiConfig = ({ value = {}, onChange }) => {
           </Tooltip>
         </Space>
       </Divider>
-
-      <Alert
-        message="✨ Parâmetros Inteligentes"
-        description="Configure parâmetros que se atualizam automaticamente com as ações do usuário (paginação, ordenação, etc). Você também pode criar parâmetros estáticos com valores fixos."
-        type="success"
-        showIcon
-        closable
-        style={{ marginBottom: 16 }}
-      />
-
       <ParamsTable
         params={queryParams}
         onChange={(newParams) => updateConfig({ queryParams: newParams })}
@@ -237,7 +207,7 @@ const ApiConfig = ({ value = {}, onChange }) => {
         }
         help={
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            ⚠️ Opcional - Deixe em branco se sua API não exigir autenticação
+            Opcional - Deixe em branco se sua API não exigir autenticação
           </Text>
         }
       >
@@ -269,15 +239,6 @@ const ApiConfig = ({ value = {}, onChange }) => {
           </Tooltip>
         </Space>
       </Divider>
-
-      <Alert
-        message="⚠️ Seção Avançada - Pule se não souber"
-        description="Só adicione headers se o administrador da API te pediu. A maioria das APIs não precisa de headers extras."
-        type="warning"
-        showIcon
-        closable
-        style={{ marginBottom: 16 }}
-      />
 
       {/* Headers */}
       {headers.map((header, index) => (

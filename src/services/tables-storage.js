@@ -12,13 +12,15 @@ const OLD_CONFIG_KEY = 'datatable_config'; // Para migração
  * Default config for a new table
  */
 export const getDefaultConfig = () => ({
+  name: '',
+  description: '',
+  icon: '',
   api: {
     baseURL: '',
     token: '',
     headers: [],
     body: [],
   },
-  endpoints: [],
   columns: [],
   mapping: {
     dataPath: '',

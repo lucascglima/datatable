@@ -250,13 +250,6 @@ const UrlPreview = ({
               <Tag color="green">Path</Tag>
               <Tag color="purple">Query Params</Tag>
             </Space>
-
-            <div style={{ marginTop: 12, fontSize: '12px', color: '#8c8c8c' }}>
-              💡 <Text type="secondary">
-                Esta é a URL que será usada nas requisições.
-                Os valores dos parâmetros dinâmicos serão atualizados conforme as ações do usuário.
-              </Text>
-            </div>
           </div>
         }
         type="info"

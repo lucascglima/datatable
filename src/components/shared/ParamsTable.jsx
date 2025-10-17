@@ -13,7 +13,6 @@
  * />
  */
 
-import React from 'react';
 import { Table, Input, Select, Checkbox, Button, Space, Tooltip, Typography } from 'antd';
 import { DeleteOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 
@@ -25,10 +24,10 @@ const { Option } = Select;
  * Define quando o parâmetro será atualizado automaticamente
  */
 const QUERY_PARAM_REFERENCES = [
-  { value: 'PAGE_CHANGE', label: 'Mudança de Página', description: 'Atualiza quando usuário navega entre páginas' },
-  { value: 'PAGE_SIZE_CHANGE', label: 'Mudança de Tamanho', description: 'Atualiza quando usuário altera itens por página' },
-  { value: 'SORT_FIELD', label: 'Campo de Ordenação', description: 'Atualiza com o campo que está sendo ordenado' },
-  { value: 'SORT_ORDER', label: 'Direção da Ordenação', description: 'Atualiza com ascendente/descendente' },
+  { value: 'PAGE_CHANGE', label: 'Página', description: 'Atualiza quando usuário navega entre páginas' },
+  { value: 'PAGE_SIZE_CHANGE', label: 'Tamanho da Página', description: 'Atualiza quando usuário altera itens por página' },
+  { value: 'SORT_FIELD', label: 'Campo de ordenação', description: 'Será enviado o "DataKey" correspondente ao campo' },
+  { value: 'SORT_ORDER', label: 'Direção da ordenação', description: 'Atualiza com ascendente (asc) /descendente (desc)' },
   { value: 'STATIC', label: 'Estático', description: 'Valor fixo, não muda automaticamente' },
 ];
 
@@ -36,7 +35,6 @@ const ParamsTable = ({
   params = [],
   onChange,
   type = 'query', // 'query' or 'path'
-  title = 'Parâmetros'
 }) => {
 
   /**
@@ -109,7 +107,7 @@ const ParamsTable = ({
         width: type === 'query' ? '25%' : '35%',
         render: (text, record, index) => (
           <Input
-            placeholder={type === 'query' ? 'Ex: 1' : 'Ex: 123'}
+            placeholder={type === 'query' ? 'Ex: 1 ou vazio se for o caso' : 'Ex: 123'}
             value={text}
             onChange={(e) => handleUpdateParam(index, 'value', e.target.value)}
             size="small"
@@ -175,7 +173,7 @@ const ParamsTable = ({
 
     // Coluna de Ações
     baseColumns.push({
-      title: <Text strong>Ações</Text>,
+      
       key: 'actions',
       width: '10%',
       align: 'center',

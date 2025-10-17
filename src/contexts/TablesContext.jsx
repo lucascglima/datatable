@@ -238,7 +238,7 @@ export const TablesProvider = ({ children }) => {
 };
 
 export const useTables = () => {
-  const context = useContext(TablesContext);
+  const context = useContext(TablesContext);  
   if (!context) {
     throw new Error('useTables must be used within TablesProvider');
   }

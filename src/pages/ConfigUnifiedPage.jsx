@@ -20,11 +20,8 @@ import { useTables } from '../contexts/TablesContext';
 
 // Import existing config components
 import ApiConfig from '../components/ConfigPanel/ApiConfig';
-import PaginationConfig from '../components/ConfigPanel/PaginationConfig';
-import ErrorHandlingConfig from '../components/ConfigPanel/ErrorHandlingConfig';
 import MappingConfig from '../components/ConfigPanel/MappingConfig';
 import ColumnsVisualEditor from '../components/ConfigPanel/ColumnsVisualEditor';
-import ClickActionsBuilder from '../components/ConfigPanel/ClickActionsBuilder';
 import RowClickConfig from '../components/ConfigPanel/RowClickConfig';
 import ConfigSavedModal from '../components/ConfigPanel/ConfigSavedModal';
 import ColumnModeSelector from '../components/ConfigPanel/ColumnModeSelector';
@@ -135,6 +132,7 @@ const ConfigUnifiedPage = () => {
   // Load config when table changes
   useEffect(() => {
     if (config) {
+      console.log(config, 'config');
       setFormData({
         api: config.api || formData.api,
         pagination: config.pagination || formData.pagination,
@@ -159,6 +157,7 @@ const ConfigUnifiedPage = () => {
           return false;
         }
         // Valida error handlers
+        // eslint-disable-next-line no-case-declarations
         const invalidHandlers = formData.errorHandlers.filter(
           (h) => !h.status || !h.message || !h.action
         );
@@ -227,6 +226,7 @@ const ConfigUnifiedPage = () => {
 
     // Valida seção
     const step = STEPS.find(s => s.key === sectionKey);
+    console.log(step, 'step');
     if (!step) {
       message.error('Seção inválida');
       return;
@@ -249,7 +249,7 @@ const ConfigUnifiedPage = () => {
 
     // Mostra modal de sucesso
     setSavedSectionName(step.title);
-    setSavedModalVisible(true);
+    // setSavedModalVisible(true);
 
     message.success(`Seção "${step.title}" salva com sucesso!`);
   };

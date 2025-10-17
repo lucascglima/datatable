@@ -26,17 +26,15 @@ const { Text, Paragraph } = Typography;
  * Mapeamento de tipos de ação para exibição visual
  */
 const ACTION_TYPE_LABELS = {
-  navigate: { label: 'Navegar', color: 'blue', icon: '🔗' },
-  modal: { label: 'Abrir Modal', color: 'purple', icon: '📋' },
-  api: { label: 'Chamar API', color: 'green', icon: '🌐' },
-  copy: { label: 'Copiar', color: 'orange', icon: '📋' },
-  download: { label: 'Download', color: 'cyan', icon: '💾' },
-  javascript: { label: 'JavaScript', color: 'red', icon: '⚙️' },
+  navigate: { label: 'Navegar', description: 'Navega para uma nova URL', color: 'blue', icon: '🔗' },
+  modal: { label: 'Abrir Modal', description: 'Abre um modal com conteúdo', color: 'purple', icon: '📋' },
+  api: { label: 'Chamar API', description: 'Faz uma chamada para uma API', color: 'green', icon: '🌐' },
+  copy: { label: 'Copiar', description: 'Copia um valor para a área de transferência', color: 'orange', icon: '📋' },
+  download: { label: 'Download', description: 'Faz o download de um arquivo', color: 'cyan', icon: '💾' },
+  javascript: { label: 'JavaScript', description: 'Executa um código JavaScript', color: 'red', icon: '⚙️' },
 };
 
-/**
- * Ações padrão disponíveis (mesmas do ActionConfigModal)
- */
+
 const DEFAULT_ACTIONS = [
   {
     identifier: 'navigateUrl',
@@ -156,6 +154,7 @@ const RowClickConfig = ({
    * Combina ações padrão com ações customizadas
    */
   const getAllActions = () => {
+    console.log([...DEFAULT_ACTIONS, ...clickActions], '[...DEFAULT_ACTIONS, ...clickActions];')
     return [...DEFAULT_ACTIONS, ...clickActions];
   };
 
@@ -307,7 +306,7 @@ const RowClickConfig = ({
                 options={getAllActions().map(action => {
                   const typeInfo = ACTION_TYPE_LABELS[action.actionType] || {};
                   return {
-                    label: `${typeInfo.icon} ${action.identifier} (${typeInfo.label})`,
+                    label: `${typeInfo.label} (${typeInfo.description})`,
                     value: action.identifier,
                     action: action,
                   };
@@ -318,21 +317,10 @@ const RowClickConfig = ({
                   return (
                     <Space direction="vertical" size={0}>
                       <Space>
-                        <Text strong>{action.identifier}</Text>
-                        <Tag color={typeInfo.color} style={{ margin: 0 }}>
-                          {typeInfo.label}
-                        </Tag>
-                        {action.isDefault && (
-                          <Tag color="default" style={{ margin: 0, fontSize: '10px' }}>
-                            Padrão
-                          </Tag>
-                        )}
+                        <Text strong>{typeInfo.label}</Text>
                       </Space>
                       <Text type="secondary" style={{ fontSize: '11px' }}>
-                        {action.isDefault && 'Ação pré-configurada'}
-                        {!action.isDefault && action.elementType === 'button' && 'Ação de Botão'}
-                        {!action.isDefault && action.elementType === 'icon' && 'Ação de Ícone'}
-                        {!action.isDefault && action.elementType === 'link' && 'Ação de Link'}
+                       {typeInfo.description}                      
                       </Text>
                     </Space>
                   );

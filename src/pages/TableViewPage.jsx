@@ -31,6 +31,10 @@ const TableViewPage = () => {
   const [currentPageSize, setCurrentPageSize] = useState(20);
   const [total, setTotal] = useState(0);
 
+  // Estado reativo de ordenação
+  const [sortField, setSortField] = useState(null);
+  const [sortOrder, setSortOrder] = useState(null);
+
   const table = getTableById(tableId);
   const config = table?.config;
 
@@ -44,7 +48,7 @@ const TableViewPage = () => {
   /**
    * Carrega dados da API usando novo sistema
    */
-  const loadData = useCallback(async (page = currentPage, pageSize = currentPageSize) => {
+  const loadData = useCallback(async (page = currentPage, pageSize = currentPageSize, sort = { field: sortField, order: sortOrder }) => {
     if (!config || !config.api?.baseURL) {
       console.warn('⚠️ Config ou baseURL não definidos');
       return;
@@ -64,6 +68,8 @@ const TableViewPage = () => {
       // Se houver query params configurados, usa os nomes deles
       const pageParam = config.api.queryParams?.find(p => p.reference === 'PAGE_CHANGE');
       const pageSizeParam = config.api.queryParams?.find(p => p.reference === 'PAGE_SIZE_CHANGE');
+      const sortFieldParam = config.api.queryParams?.find(p => p.reference === 'SORT_FIELD');
+      const sortOrderParam = config.api.queryParams?.find(p => p.reference === 'SORT_ORDER');
 
       if (pageParam && pageParam.enabled) {
         dynamicValues[pageParam.name] = page;
@@ -73,8 +79,21 @@ const TableViewPage = () => {
         dynamicValues[pageSizeParam.name] = pageSize;
       }
 
+      // Adiciona parâmetros de ordenação se configurados e se há ordenação ativa
+      if (sort.field && sort.order) {
+        if (sortFieldParam && sortFieldParam.enabled) {
+          dynamicValues[sortFieldParam.name] = sort.field;
+        }
+        if (sortOrderParam && sortOrderParam.enabled) {
+          // Converte 'ascend'/'descend' para formato que a API espera
+          const orderValue = sort.order === 'ascend' ? 'asc' : 'desc';
+          dynamicValues[sortOrderParam.name] = orderValue;
+        }
+      }
+
       console.log('  📄 Página:', page);
       console.log('  📦 Tamanho:', pageSize);
+      console.log('  🔀 Ordenação:', sort.field || 'nenhuma', sort.order || '');
 
       // Chama novo serviço de API
       const response = await fetchData(
@@ -88,10 +107,40 @@ const TableViewPage = () => {
       console.log('═══════════════════════════════════════════════');
       console.log('');
 
-      setData(response.data || []);
-      setTotal(response.pagination?.total || response.data.length);
+      let processedData = response.data || [];
+
+      // Se há ordenação mas NÃO há parâmetros de sort configurados, ordena localmente
+      const hasSortParams = sortFieldParam?.enabled || sortOrderParam?.enabled;
+      if (sort.field && sort.order && !hasSortParams) {
+        console.log('  🔄 Ordenando dados localmente (sem parâmetros de API)');
+        processedData = [...processedData].sort((a, b) => {
+          const aVal = a[sort.field];
+          const bVal = b[sort.field];
+
+          if (aVal === null || aVal === undefined) return 1;
+          if (bVal === null || bVal === undefined) return -1;
+
+          if (typeof aVal === 'string' && typeof bVal === 'string') {
+            const comparison = aVal.localeCompare(bVal);
+            return sort.order === 'ascend' ? comparison : -comparison;
+          }
+
+          if (typeof aVal === 'number' && typeof bVal === 'number') {
+            return sort.order === 'ascend' ? aVal - bVal : bVal - aVal;
+          }
+
+          // Fallback: converte para string
+          const comparison = String(aVal).localeCompare(String(bVal));
+          return sort.order === 'ascend' ? comparison : -comparison;
+        });
+      }
+
+      setData(processedData);
+      setTotal(response.pagination?.total || processedData.length);
       setCurrentPage(page);
       setCurrentPageSize(pageSize);
+      setSortField(sort.field);
+      setSortOrder(sort.order);
 
     } catch (error) {
       console.error('');
@@ -120,7 +169,7 @@ const TableViewPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [config, currentPage, currentPageSize]);
+  }, [config, currentPage, currentPageSize, sortField, sortOrder]);
 
   // Carrega dados quando config muda
   useEffect(() => {
@@ -135,8 +184,8 @@ const TableViewPage = () => {
   const handlePageChange = useCallback((page) => {
     console.log('');
     console.log('📄 [TableViewPage] Mudança de página:', currentPage, '→', page);
-    loadData(page, currentPageSize);
-  }, [loadData, currentPage, currentPageSize]);
+    loadData(page, currentPageSize, { field: sortField, order: sortOrder });
+  }, [loadData, currentPage, currentPageSize, sortField, sortOrder]);
 
   /**
    * Handler para mudança de tamanho de página
@@ -144,8 +193,8 @@ const TableViewPage = () => {
   const handlePageSizeChange = useCallback((pageSize) => {
     console.log('');
     console.log('📦 [TableViewPage] Mudança de tamanho:', currentPageSize, '→', pageSize);
-    loadData(1, pageSize); // Reset to page 1 when page size changes
-  }, [loadData, currentPageSize]);
+    loadData(1, pageSize, { field: sortField, order: sortOrder }); // Reset to page 1 when page size changes
+  }, [loadData, currentPageSize, sortField, sortOrder]);
 
   /**
    * Handler para recarregar dados
@@ -153,19 +202,18 @@ const TableViewPage = () => {
   const handleReload = () => {
     console.log('');
     console.log('🔄 [TableViewPage] Recarregando dados...');
-    loadData(currentPage, currentPageSize);
+    loadData(currentPage, currentPageSize, { field: sortField, order: sortOrder });
   };
 
   /**
    * Handler para click em linha
    */
-  const handleRowClick = (record) => {
+  const handleRowClick = (record) => {    
     // PRIORIDADE 1: Verifica se há configuração de rowClick nova (visual)
     if (config?.events?.rowClick?.enabled && config?.events?.rowClick?.selectedAction) {
       const actionIdentifier = config.events.rowClick.selectedAction;
       const clickActions = config.events.clickActions || [];
-      const action = findActionByIdentifier(clickActions, actionIdentifier);
-
+      const action = findActionByIdentifier(clickActions, actionIdentifier);  
       if (action) {
         console.log('✨ [Row Click] Executando ação visual:', actionIdentifier);
         const actionContext = {
@@ -289,7 +337,7 @@ const TableViewPage = () => {
   }
 
   // Verifica se paginação está habilitada
-  const isPaginationEnabled = config.pagination?.enabled !== false;
+  const isPaginationEnabled = config.pagination?.enabled === true;
 
   return (
     <div className="page-container">
@@ -346,7 +394,9 @@ const TableViewPage = () => {
               total: total,
               pageSizeOptions: config.pagination?.pageSizeOptions || [10, 20, 50, 100],
             }}
-            paginationEnabled={isPaginationEnabled}
+            paginationEnabled={true}
+            currentSortField={sortField}
+            currentSortOrder={sortOrder}
             onPaginationChange={(newPagination) => {
               // DxpTable chama isso com {current, pageSize}
               if (newPagination.pageSize !== currentPageSize) {
@@ -359,8 +409,19 @@ const TableViewPage = () => {
             onRowClick={config?.events?.rowClick?.enabled ? handleRowClick : null}
             rowClickable={config?.events?.rowClick?.enabled || false}
             onSort={(sorter) => {
-              console.log('🔀 Sort:', sorter);
-              // TODO: Implementar ordenação quando necessário
+              console.log('🔀 [TableViewPage] Sort event:', sorter);
+
+              // Atualiza estado de ordenação e recarrega dados
+              const newSortField = sorter.columnKey || null;
+              const newSortOrder = sorter.order || null;
+
+              console.log(`🔀 Alterando ordenação: ${sortField} ${sortOrder} → ${newSortField} ${newSortOrder}`);
+
+              // Chama loadData com nova ordenação
+              loadData(currentPage, currentPageSize, {
+                field: newSortField,
+                order: newSortOrder
+              });
             }}
           />
         )}

@@ -10,10 +10,7 @@ import MainLayout from './layouts/MainLayout';
 import TablesListPage from './pages/TablesListPage';
 import TableViewPage from './pages/TableViewPage';
 import ExamplesGalleryPage from './pages/ExamplesGalleryPage';
-import ConfigGeneralPage from './pages/ConfigGeneralPage';
-import ConfigColumnsPage from './pages/ConfigColumnsPage';
-import ConfigMappingPage from './pages/ConfigMappingPage';
-import ConfigEventsPage from './pages/ConfigEventsPage';
+
 import ConfigUnifiedPage from './pages/ConfigUnifiedPage';
 import DocumentationPage from './pages/DocumentationPage';
 
@@ -45,12 +42,6 @@ const App = () => {
               {/* Configuration (for specific table) */}
               {/* New unified configuration page */}
               <Route path="/config/:tableId" element={<ConfigUnifiedPage />} />
-
-              {/* Legacy configuration pages (mantidas para compatibilidade) */}
-              <Route path="/config/:tableId/general" element={<ConfigGeneralPage />} />
-              <Route path="/config/:tableId/columns" element={<ConfigColumnsPage />} />
-              <Route path="/config/:tableId/mapping" element={<ConfigMappingPage />} />
-              <Route path="/config/:tableId/events" element={<ConfigEventsPage />} />
 
               {/* Documentation */}
               <Route path="/documentation" element={<DocumentationPage />} />

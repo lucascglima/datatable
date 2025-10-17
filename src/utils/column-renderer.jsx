@@ -234,14 +234,9 @@ export const buildTableColumns = (columnsConfig, eventHandlers = {}, clickAction
       title: column.title,
       dataIndex: column.dataIndex,
       key: column.key || column.dataIndex,
-      sorter: column.sortable ? (a, b) => {
-        const aVal = a[column.dataIndex];
-        const bVal = b[column.dataIndex];
-        if (typeof aVal === 'string') {
-          return aVal.localeCompare(bVal);
-        }
-        return aVal - bVal;
-      } : undefined,
+      // Sorter handling is now done by dxp-table-header, not here
+      sortable: column.sortable, // Pass sortable flag for header to process
+      defaultSortOrder: column.defaultSortOrder, // Pass default sort order if configured
       showSorterTooltip: column.sortable ? { title: 'Clique para ordenar' } : false,
       width: column.width,
     };
